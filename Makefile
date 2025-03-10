@@ -7,6 +7,9 @@ help: ## Show help
 vendor: ## Install dependencies using vendoring
 	go mod vendor
 
+migrate: ## Apply migrations
+	go run ./cmd/migrations/main.go
+
 generate: ## Generate
 	go generate ./...
 

@@ -6,6 +6,7 @@
 *.sublime-workspace
 *.sublime-project
 mock_*.go
+*.db
 
 # Environment
 .DS_Store

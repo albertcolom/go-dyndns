@@ -8,6 +8,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"go-dyndns/application"
 	"go-dyndns/domain"
+	"go-dyndns/infrastructure/dns"
 	"go-dyndns/infrastructure/http"
 	"go-dyndns/infrastructure/repository"
 )
@@ -22,6 +23,9 @@ func main() {
 	repo := repository.NewSQLiteRepository(db)
 	domainService := domain.NewDNSService(repo)
 	appService := application.NewDNSAppService(domainService)
+
+	dnsServer := dns.NewDNSServer(repo)
+	go dnsServer.Start()
 
 	dnsHandler := http.NewDNSHandler(appService)
 

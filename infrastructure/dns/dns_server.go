@@ -3,6 +3,7 @@ package dns
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/miekg/dns"
 	"go-dyndns/domain"
@@ -18,6 +19,13 @@ func NewDNSServer(repository domain.DNSRepository) *DNSServer {
 
 func (s *DNSServer) Start() {
 	dns.HandleFunc(".", s.handleDNSRequest)
+
+	server := &dns.Server{Addr: ":53", Net: "udp"}
+
+	log.Println("Starting DNS server on :53")
+	if err := server.ListenAndServe(); err != nil {
+		log.Fatalf("Failed to start DNS server: %v", err)
+	}
 }
 
 func (s *DNSServer) handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
@@ -26,7 +34,7 @@ func (s *DNSServer) handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 
 	for _, question := range r.Question {
 		if question.Qtype == dns.TypeA {
-			domainName := question.Name
+			domainName := strings.TrimSuffix(question.Name, ".")
 
 			record, err := s.repository.Find(domainName)
 			if err != nil {
@@ -35,7 +43,7 @@ func (s *DNSServer) handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 			}
 
 			if record != nil {
-				rr, err := dns.NewRR(fmt.Sprintf("%s A %s", domainName, record.IP.String()))
+				rr, err := dns.NewRR(fmt.Sprintf("%s. A %s", domainName, record.IP.String()))
 				if err == nil {
 					msg.Answer = append(msg.Answer, rr)
 				}

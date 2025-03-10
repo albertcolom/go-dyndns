@@ -10,7 +10,7 @@ type DNSRecord struct {
 	IP     net.IP `json:"ip"`
 }
 
-func (d DNSRecord) Validate() error {
+func (d *DNSRecord) Validate() error {
 	if d.Domain == "" {
 		return ErrInvalidDomain
 	}

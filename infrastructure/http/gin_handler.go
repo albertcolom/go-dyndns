@@ -15,7 +15,7 @@ func NewDNSHandler(appService *application.DNSAppService) *DNSHandler {
 	return &DNSHandler{appService: appService}
 }
 
-func (h DNSHandler) UpdateIp(c *gin.Context) {
+func (h *DNSHandler) UpdateIp(c *gin.Context) {
 	domain := c.Query("domain")
 	ip := c.Query("ip")
 
@@ -33,7 +33,7 @@ func (h DNSHandler) UpdateIp(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Updated " + domain + " to " + ip})
 }
 
-func (h DNSHandler) GetIp(c *gin.Context) {
+func (h *DNSHandler) GetIp(c *gin.Context) {
 	domain := c.Query("domain")
 
 	if domain == "" {

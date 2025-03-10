@@ -14,7 +14,7 @@ func NewDNSAppService(domainService *domain.DNSService) *DNSAppService {
 	return &DNSAppService{domainService}
 }
 
-func (s DNSAppService) UpdateDNSRecord(domainName, ip string) error {
+func (s *DNSAppService) UpdateDNSRecord(domainName, ip string) error {
 	parseIP := net.ParseIP(ip)
 	if parseIP == nil {
 		return domain.ErrInvalidDomain
@@ -22,6 +22,6 @@ func (s DNSAppService) UpdateDNSRecord(domainName, ip string) error {
 	return s.domainService.UpdateDNSRecord(domainName, parseIP)
 }
 
-func (s DNSAppService) GetDNSRecord(domainName string) (*domain.DNSRecord, error) {
+func (s *DNSAppService) GetDNSRecord(domainName string) (*domain.DNSRecord, error) {
 	return s.domainService.GetDNSRecord(domainName)
 }

@@ -5,6 +5,7 @@
 .history/
 *.sublime-workspace
 *.sublime-project
+mock_*.go
 
 # Environment
 .DS_Store

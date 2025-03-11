@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/miekg/dns"
-	"go-dyndns/application"
+	"go-dyndns/internal/application"
 )
 
 type DNSServer struct {

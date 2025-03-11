@@ -3,12 +3,12 @@ package main
 import (
 	"log"
 
-	"go-dyndns/application"
-	"go-dyndns/domain"
-	"go-dyndns/infrastructure/database"
-	"go-dyndns/infrastructure/dns"
-	"go-dyndns/infrastructure/http"
-	"go-dyndns/infrastructure/repository"
+	"go-dyndns/internal/application"
+	"go-dyndns/internal/domain"
+	"go-dyndns/internal/infrastructure/database"
+	"go-dyndns/internal/infrastructure/dns"
+	"go-dyndns/internal/infrastructure/http"
+	"go-dyndns/internal/infrastructure/repository"
 )
 
 func main() {

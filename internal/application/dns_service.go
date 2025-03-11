@@ -3,7 +3,7 @@ package application
 import (
 	"net"
 
-	"go-dyndns/domain"
+	"go-dyndns/internal/domain"
 )
 
 type DNSAppService struct {

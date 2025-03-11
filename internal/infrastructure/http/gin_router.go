@@ -14,7 +14,7 @@ func NewRouter(dnsHandler *DNSHandler) *DnsRouter {
 	return &DnsRouter{DnsHandler: dnsHandler}
 }
 
-func (r *DnsRouter) Run() {
+func (r *DnsRouter) Run(addr string) {
 	router := gin.New()
 
 	router.GET("/health", r.DnsHandler.Health)
@@ -23,7 +23,7 @@ func (r *DnsRouter) Run() {
 
 	log.Println("Starting HTTP server on :8080")
 
-	if err := router.Run(":8080"); err != nil {
+	if err := router.Run(addr); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }

@@ -1,0 +1,7 @@
+http:
+  addr: ":8080"
+dns:
+  addr: ":53"
+  net: "udp"
+sqlite:
+  path: "./app.db"

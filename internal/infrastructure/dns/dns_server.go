@@ -17,10 +17,10 @@ func NewDNSServer(appService *application.DNSAppService) *DNSServer {
 	return &DNSServer{appService: appService}
 }
 
-func (s *DNSServer) Start() {
+func (s *DNSServer) Start(addr, net string) {
 	dns.HandleFunc(".", s.handleDNSRequest)
 
-	server := &dns.Server{Addr: ":53", Net: "udp"}
+	server := &dns.Server{Addr: addr, Net: net}
 
 	log.Println("Starting DNS server on :53")
 	if err := server.ListenAndServe(); err != nil {

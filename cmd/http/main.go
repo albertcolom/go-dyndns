@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"log"
 
-	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"
 	"go-dyndns/application"
 	"go-dyndns/domain"
@@ -28,12 +27,11 @@ func main() {
 	go dnsServer.Start()
 
 	dnsHandler := http.NewDNSHandler(appService)
-
-	router := gin.Default()
-
-	router.GET("/update", dnsHandler.UpdateIp)
-	router.GET("/get", dnsHandler.GetIp)
+	router := http.NewRouter(dnsHandler)
 
 	log.Println("Starting HTTP server on :8080")
-	router.Run(":8080")
+
+	if err := router.Run(":8080"); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }

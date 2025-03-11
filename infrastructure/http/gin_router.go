@@ -1,17 +1,29 @@
 package http
 
-import "github.com/gin-gonic/gin"
+import (
+	"log"
+
+	"github.com/gin-gonic/gin"
+)
 
 type DnsRouter struct {
-	DnsRouter *DNSHandler
+	DnsHandler *DNSHandler
 }
 
-func NewRouter(dnsHandler *DNSHandler) *gin.Engine {
+func NewRouter(dnsHandler *DNSHandler) *DnsRouter {
+	return &DnsRouter{DnsHandler: dnsHandler}
+}
+
+func (r *DnsRouter) Run() {
 	router := gin.New()
 
-	router.GET("/health", dnsHandler.Health)
-	router.GET("/update", dnsHandler.UpdateIp)
-	router.GET("/get", dnsHandler.GetIp)
+	router.GET("/health", r.DnsHandler.Health)
+	router.GET("/update", r.DnsHandler.UpdateIp)
+	router.GET("/get", r.DnsHandler.GetIp)
 
-	return router
+	log.Println("Starting HTTP server on :8080")
+
+	if err := router.Run(":8080"); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }

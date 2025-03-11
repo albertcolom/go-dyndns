@@ -28,10 +28,5 @@ func main() {
 
 	dnsHandler := http.NewDNSHandler(appService)
 	router := http.NewRouter(dnsHandler)
-
-	log.Println("Starting HTTP server on :8080")
-
-	if err := router.Run(":8080"); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
-	}
+	router.Run()
 }

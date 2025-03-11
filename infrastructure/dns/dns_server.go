@@ -6,15 +6,15 @@ import (
 	"strings"
 
 	"github.com/miekg/dns"
-	"go-dyndns/domain"
+	"go-dyndns/application"
 )
 
 type DNSServer struct {
-	repository domain.DNSRepository
+	appService *application.DNSAppService
 }
 
-func NewDNSServer(repository domain.DNSRepository) *DNSServer {
-	return &DNSServer{repository: repository}
+func NewDNSServer(appService *application.DNSAppService) *DNSServer {
+	return &DNSServer{appService: appService}
 }
 
 func (s *DNSServer) Start() {
@@ -36,7 +36,7 @@ func (s *DNSServer) handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 		if question.Qtype == dns.TypeA {
 			domainName := strings.TrimSuffix(question.Name, ".")
 
-			record, err := s.repository.Find(domainName)
+			record, err := s.appService.GetDNSRecord(domainName)
 			if err != nil {
 				log.Printf("Error finding record for %s: %v", domainName, err)
 				continue

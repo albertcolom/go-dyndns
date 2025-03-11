@@ -22,7 +22,7 @@ func main() {
 	domainService := domain.NewDNSService(repo)
 	appService := application.NewDNSAppService(domainService)
 
-	dnsServer := dns.NewDNSServer(repo)
+	dnsServer := dns.NewDNSServer(appService)
 	go dnsServer.Start()
 
 	dnsHandler := http.NewDNSHandler(appService)

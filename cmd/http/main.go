@@ -1,25 +1,24 @@
 package main
 
 import (
-	"database/sql"
 	"log"
 
-	_ "github.com/mattn/go-sqlite3"
 	"go-dyndns/application"
 	"go-dyndns/domain"
+	"go-dyndns/infrastructure/database"
 	"go-dyndns/infrastructure/dns"
 	"go-dyndns/infrastructure/http"
 	"go-dyndns/infrastructure/repository"
 )
 
 func main() {
-	db, err := sql.Open("sqlite3", "./app.db")
+	dbClient, err := database.NewClient("./app.db")
 	if err != nil {
-		log.Fatalf("Failed to open database: %v", err)
+		log.Fatalf("Failed to initialize database client: %v", err)
 	}
-	defer db.Close()
+	defer dbClient.Close()
 
-	repo := repository.NewSQLiteRepository(db)
+	repo := repository.NewSQLiteRepository(dbClient.DB)
 	domainService := domain.NewDNSService(repo)
 	appService := application.NewDNSAppService(domainService)
 

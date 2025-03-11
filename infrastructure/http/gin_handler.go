@@ -15,6 +15,10 @@ func NewDNSHandler(appService *application.DNSAppService) *DNSHandler {
 	return &DNSHandler{appService: appService}
 }
 
+func (h *DNSHandler) Health(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
 func (h *DNSHandler) UpdateIp(c *gin.Context) {
 	domain := c.Query("domain")
 	ip := c.Query("ip")

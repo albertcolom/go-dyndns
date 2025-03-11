@@ -9,6 +9,7 @@ type DnsRouter struct {
 func NewRouter(dnsHandler *DNSHandler) *gin.Engine {
 	router := gin.New()
 
+	router.GET("/health", dnsHandler.Health)
 	router.GET("/update", dnsHandler.UpdateIp)
 	router.GET("/get", dnsHandler.GetIp)
 

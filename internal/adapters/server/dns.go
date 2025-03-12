@@ -51,5 +51,7 @@ func (s *Dns) handleDNSRequest(w server.ResponseWriter, r *server.Msg) {
 		}
 	}
 
-	w.WriteMsg(msg)
+	if err := w.WriteMsg(msg); err != nil {
+		log.Printf("Failed to write DNS response: %v", err)
+	}
 }

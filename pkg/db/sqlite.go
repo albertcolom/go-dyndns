@@ -1,4 +1,4 @@
-package database
+package db
 
 import (
 	"database/sql"
@@ -10,8 +10,8 @@ type Client struct {
 	DB *sql.DB
 }
 
-func NewClient(dataSourceName string) (*Client, error) {
-	db, err := sql.Open("sqlite3", dataSourceName)
+func NewSQLiteClient(dbPath string) (*Client, error) {
+	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		return nil, err
 	}

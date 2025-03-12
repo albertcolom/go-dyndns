@@ -4,15 +4,15 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"go-dyndns/internal/application"
+	"go-dyndns/internal/core/dns"
 )
 
 type DNSHandler struct {
-	appService *application.DNSAppService
+	service *dns.Service
 }
 
-func NewDNSHandler(appService *application.DNSAppService) *DNSHandler {
-	return &DNSHandler{appService: appService}
+func NewDNSHandler(service *dns.Service) *DNSHandler {
+	return &DNSHandler{service: service}
 }
 
 func (h *DNSHandler) Health(c *gin.Context) {
@@ -28,7 +28,7 @@ func (h *DNSHandler) UpdateIp(c *gin.Context) {
 		return
 	}
 
-	err := h.appService.UpdateDNSRecord(domain, ip)
+	err := h.service.Update(domain, ip)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -45,7 +45,7 @@ func (h *DNSHandler) GetIp(c *gin.Context) {
 		return
 	}
 
-	record, err := h.appService.GetDNSRecord(domain)
+	record, err := h.service.Find(domain)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

@@ -6,15 +6,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type DnsRouter struct {
+type Router struct {
 	DnsHandler *DNSHandler
 }
 
-func NewRouter(dnsHandler *DNSHandler) *DnsRouter {
-	return &DnsRouter{DnsHandler: dnsHandler}
+func NewRouter(dnsHandler *DNSHandler) *Router {
+	return &Router{DnsHandler: dnsHandler}
 }
 
-func (r *DnsRouter) Run(addr string) {
+func (r *Router) Run(addr string) {
 	router := gin.New()
 
 	router.GET("/health", r.DnsHandler.Health)

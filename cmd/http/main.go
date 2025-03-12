@@ -3,13 +3,12 @@ package main
 import (
 	"log"
 
-	"go-dyndns/internal/application"
-	"go-dyndns/internal/domain"
-	"go-dyndns/internal/infrastructure/config"
-	"go-dyndns/internal/infrastructure/database"
-	"go-dyndns/internal/infrastructure/dns"
-	"go-dyndns/internal/infrastructure/http"
-	"go-dyndns/internal/infrastructure/repository"
+	"go-dyndns/internal/adapters/config"
+	"go-dyndns/internal/adapters/http"
+	"go-dyndns/internal/adapters/repository"
+	"go-dyndns/internal/adapters/server"
+	"go-dyndns/internal/core/dns"
+	"go-dyndns/pkg/db"
 )
 
 func main() {
@@ -18,20 +17,20 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	dbClient, err := database.NewClient(cfg.Sqlite.Path)
+	dbClient, err := db.NewSQLiteClient(cfg.Sqlite.Path)
 	if err != nil {
 		log.Fatalf("Failed to initialize database client: %v", err)
 	}
 	defer dbClient.Close()
 
-	repo := repository.NewSQLiteRepository(dbClient.DB)
-	domainService := domain.NewDNSService(repo)
-	appService := application.NewDNSAppService(domainService)
+	repo := repository.NewSQLiteDNSRepository(dbClient.DB)
+	service := dns.NewService(repo)
 
-	dnsServer := dns.NewDNSServer(appService)
+	dnsServer := server.NewDns(service)
 	go dnsServer.Start(cfg.Dns.Addr, cfg.Dns.Net)
 
-	dnsHandler := http.NewDNSHandler(appService)
-	router := http.NewRouter(dnsHandler)
+	handler := http.NewDNSHandler(service)
+	router := http.NewRouter(handler)
+
 	router.Run(cfg.Http.Addr)
 }

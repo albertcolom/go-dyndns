@@ -34,6 +34,16 @@ func TestUpdateDns(t *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, ErrInvalidIP, err)
 	})
+
+	t.Run("Update failed for invalid domain", func(t *testing.T) {
+		domain := "i n v a l i d .domain"
+		ip := "192.168.1.1"
+
+		err := service.Update(domain, ip)
+
+		assert.Error(t, err)
+		assert.Equal(t, ErrInvalidDomain, err)
+	})
 }
 
 func TestFindDns(t *testing.T) {

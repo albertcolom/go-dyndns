@@ -17,6 +17,10 @@ func (s *Service) Update(domain, ip string) error {
 	}
 	dns := &Dns{Domain: domain, IP: parseIP}
 
+	if err := dns.ValidateDomain(); err != nil {
+		return err
+	}
+
 	return s.repository.Save(dns)
 }
 

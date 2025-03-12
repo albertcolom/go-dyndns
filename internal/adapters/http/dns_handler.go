@@ -8,10 +8,10 @@ import (
 )
 
 type DNSHandler struct {
-	service *dns.Service
+	service dns.Service
 }
 
-func NewDNSHandler(service *dns.Service) *DNSHandler {
+func NewDNSHandler(service dns.Service) *DNSHandler {
 	return &DNSHandler{service: service}
 }
 

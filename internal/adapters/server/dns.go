@@ -10,10 +10,10 @@ import (
 )
 
 type Dns struct {
-	service *dns.Service
+	service dns.Service
 }
 
-func NewDns(service *dns.Service) *Dns {
+func NewDns(service dns.Service) *Dns {
 	return &Dns{service: service}
 }
 

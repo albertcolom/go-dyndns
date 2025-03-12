@@ -1,16 +1,23 @@
+//go:generate mockgen -source=$GOFILE -destination=mock_$GOFILE -package=$GOPACKAGE
+
 package dns
 
 import "net"
 
-type Service struct {
+type Service interface {
+	Update(domain, ip string) error
+	Find(domain string) (*Dns, error)
+}
+
+type service struct {
 	repository Repository
 }
 
-func NewService(repository Repository) *Service {
-	return &Service{repository: repository}
+func NewService(repository Repository) Service {
+	return &service{repository: repository}
 }
 
-func (s *Service) Update(domain, ip string) error {
+func (s *service) Update(domain, ip string) error {
 	parseIP := net.ParseIP(ip)
 	if parseIP == nil {
 		return ErrInvalidIP
@@ -24,6 +31,6 @@ func (s *Service) Update(domain, ip string) error {
 	return s.repository.Save(dns)
 }
 
-func (s *Service) Find(domain string) (*Dns, error) {
+func (s *service) Find(domain string) (*Dns, error) {
 	return s.repository.Find(domain)
 }

@@ -26,7 +26,17 @@ jobs:
       - name: Find changed Go files
         id: changed-files
         run: |
-          changed_files=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$')
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            # For push events, compare the previous commit with the current one
+            base_commit="${{ github.event.before }}"
+            head_commit="${{ github.sha }}"
+          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            # For pull requests, compare the base branch commit with the head branch commit
+            base_commit="${{ github.event.before }}"
+            head_commit="${{ github.sha }}"
+          fi
+
+          changed_files=$(git diff --name-only $base_commit $head_commit | grep '\.go$')
           echo "Changed Go files: $changed_files"
           echo "::set-output name=changed_files::$changed_files"
 
@@ -50,24 +60,12 @@ jobs:
         run: go generate ./...
 
       - name: Run static analysis on changed files
-        run: |
-          # If there are changed Go files, run go vet on them
-          if [ -n "${{ steps.changed-files.outputs.changed_files }}" ]; then
-            echo "Running go vet on changed files..."
-            go vet ${{ steps.changed-files.outputs.changed_files }}
-          else
-            echo "No Go files changed, skipping go vet."
-          fi
+        if: ${{ steps.changed-files.outputs.changed_files != '' }}
+        run: go vet ${{ steps.changed-files.outputs.changed_files }}
 
       - name: Run golangci-lint on changed files
-        run: |
-          # If there are changed Go files, run golangci-lint on them
-          if [ -n "${{ steps.changed-files.outputs.changed_files }}" ]; then
-            echo "Running golangci-lint on changed files..."
-            go run github.com/golangci/golangci-lint/cmd/golangci-lint run ${{ steps.changed-files.outputs.changed_files }} --timeout=5m
-          else
-            echo "No Go files changed, skipping golangci-lint."
-          fi
+        if: ${{ steps.changed-files.outputs.changed_files != '' }}
+        run: go run github.com/golangci/golangci-lint/cmd/golangci-lint run ${{ steps.changed-files.outputs.changed_files }} --timeout=5m
 
       - name: Run tests
         run: go test ./...

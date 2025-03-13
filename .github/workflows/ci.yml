@@ -25,6 +25,7 @@ jobs:
 
       - name: Cache Go Vendor Directory
         uses: actions/cache@v3
+        id: vendor-cache
         with:
           path: vendor
           key: go-vendor-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
@@ -32,7 +33,7 @@ jobs:
             go-vendor-${{ runner.os }}-
 
       - name: Install Dependencies (if cache is missing)
-        if: steps.go-cache.outputs.cache-hit != 'true'
+        if: steps.vendor-cache.outputs.cache-hit != 'true'
         run: |
           go mod tidy
           go mod vendor

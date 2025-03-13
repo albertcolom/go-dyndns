@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -23,22 +25,11 @@ jobs:
           go-version: 1.21
           cache: false
 
-      - name: Find changed Go files
+      - name: Get changed Go files
         id: changed-files
         run: |
-          if [[ "${{ github.event_name }}" == "push" ]]; then
-            # For push events, compare the previous commit with the current one
-            base_commit="${{ github.event.before }}"
-            head_commit="${{ github.sha }}"
-          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            # For pull requests, compare the base branch commit with the head branch commit
-            base_commit="${{ github.event.before }}"
-            head_commit="${{ github.sha }}"
-          fi
-
-          changed_files=$(git diff --name-only $base_commit $head_commit | grep '\.go$')
-          echo "Changed Go files: $changed_files"
-          echo "::set-output name=changed_files::$changed_files"
+          changed_files=$(git diff --name-only HEAD^ HEAD | grep '\.go$' || true)
+          echo "changed_files=$changed_files" >> $GITHUB_OUTPUT
 
       - name: Cache Go Vendor Directory
         uses: actions/cache@v3
@@ -60,12 +51,12 @@ jobs:
         run: go generate ./...
 
       - name: Run static analysis on changed files
-        if: ${{ steps.changed-files.outputs.changed_files != '' }}
-        run: go vet ${{ steps.changed-files.outputs.changed_files }}
+        run: go vet ./...
 
-      - name: Run golangci-lint on changed files
+      - name: Run static analysis on changed files
         if: ${{ steps.changed-files.outputs.changed_files != '' }}
-        run: go run github.com/golangci/golangci-lint/cmd/golangci-lint run ${{ steps.changed-files.outputs.changed_files }} --timeout=5m
+        run: |
+          golangci-lint run ${{ steps.changed-files.outputs.changed_files }} --timeout=5m
 
       - name: Run tests
         run: go test ./...

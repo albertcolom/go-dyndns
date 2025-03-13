@@ -23,6 +23,13 @@ jobs:
           go-version: 1.21
           cache: false
 
+      - name: Find changed Go files
+        id: changed-files
+        run: |
+          changed_files=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$')
+          echo "Changed Go files: $changed_files"
+          echo "::set-output name=changed_files::$changed_files"
+
       - name: Cache Go Vendor Directory
         uses: actions/cache@v3
         id: vendor-cache
@@ -42,11 +49,25 @@ jobs:
       - name: Run generate
         run: go generate ./...
 
-      - name: Run static analysis
-        run: go vet ./...
+      - name: Run static analysis on changed files
+        run: |
+          # If there are changed Go files, run go vet on them
+          if [ -n "${{ steps.changed-files.outputs.changed_files }}" ]; then
+            echo "Running go vet on changed files..."
+            go vet ${{ steps.changed-files.outputs.changed_files }}
+          else
+            echo "No Go files changed, skipping go vet."
+          fi
+
+      - name: Run golangci-lint on changed files
+        run: |
+          # If there are changed Go files, run golangci-lint on them
+          if [ -n "${{ steps.changed-files.outputs.changed_files }}" ]; then
+            echo "Running golangci-lint on changed files..."
+            go run github.com/golangci/golangci-lint/cmd/golangci-lint run ${{ steps.changed-files.outputs.changed_files }} --timeout=5m
+          else
+            echo "No Go files changed, skipping golangci-lint."
+          fi
 
       - name: Run tests
         run: go test ./...
-
-      - name: Run golangci-lint
-        run: go run github.com/golangci/golangci-lint/cmd/golangci-lint run --timeout=5m

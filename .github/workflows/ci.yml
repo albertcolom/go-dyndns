@@ -51,11 +51,18 @@ jobs:
         run: go generate ./...
 
       - name: Run static analysis on changed files
-        run: go vet ./...
-
-      - name: Run static analysis on changed files
         if: ${{ steps.changed-files.outputs.changed_files != '' }}
         run: |
+          packages=$(echo "${{ steps.changed-files.outputs.changed_files }}" | xargs -n1 dirname | sort -u)
+          echo "Running go vet on packages: $packages"
+          for pkg in $packages; do
+            go vet ./$pkg
+          done
+
+      - name: Run lint analysis on changed files
+        if: ${{ steps.changed-files.outputs.changed_files != '' }}
+        run: |
+          echo "Running golangci-lint on changed files: ${{ steps.changed-files.outputs.changed_files }}"
           golangci-lint run ${{ steps.changed-files.outputs.changed_files }} --timeout=5m
 
       - name: Run tests

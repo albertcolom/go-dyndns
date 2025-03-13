@@ -42,11 +42,11 @@ jobs:
       - name: Run generate
         run: go generate ./...
 
-      - name: Run tests
-        run: go test ./...
-
       - name: Run static analysis
         run: go vet ./...
+
+      - name: Run tests
+        run: go test ./...
 
       - name: Run golangci-lint
         run: go run github.com/golangci/golangci-lint/cmd/golangci-lint run --timeout=5m

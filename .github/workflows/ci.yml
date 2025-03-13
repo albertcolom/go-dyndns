@@ -63,7 +63,7 @@ jobs:
         if: ${{ steps.changed-files.outputs.changed_files != '' }}
         run: |
           echo "Running golangci-lint on changed files: ${{ steps.changed-files.outputs.changed_files }}"
-          golangci-lint run ${{ steps.changed-files.outputs.changed_files }} --timeout=5m
+          go run github.com/golangci/golangci-lint/cmd/golangci-lint run ${{ steps.changed-files.outputs.changed_files }} --timeout=5m
 
       - name: Run tests
         run: go test ./...

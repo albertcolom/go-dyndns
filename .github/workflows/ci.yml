@@ -22,8 +22,20 @@ jobs:
         with:
           go-version: 1.21
 
-      - name: Install dependencies
-        run: go mod tidy
+      - name: Cache Go Vendor Directory
+        uses: actions/cache@v3
+        with:
+          path: vendor
+          key: go-vendor-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            go-vendor-${{ runner.os }}-
+
+      - name: Install Dependencies (if cache is missing)
+        if: steps.go-cache.outputs.cache-hit != 'true'
+        run: |
+          go mod tidy
+          go mod vendor
+          go mod verify
 
       - name: Run generate
         run: go generate ./...

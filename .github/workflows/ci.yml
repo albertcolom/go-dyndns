@@ -29,7 +29,14 @@ jobs:
         id: changed-files
         run: |
           changed_files=$(git diff --name-only HEAD^ HEAD | grep '\.go$' || true)
-          echo "changed_files=$changed_files" >> $GITHUB_OUTPUT
+          # Use EOF to handle multi-line output
+          if [ -n "$changed_files" ]; then
+            echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+            echo "$changed_files" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "changed_files=" >> $GITHUB_OUTPUT
+          fi
 
       - name: Cache Go Vendor Directory
         uses: actions/cache@v3

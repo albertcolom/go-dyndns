@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -35,6 +36,7 @@ func TestHealthHandler(t *testing.T) {
 func TestUpdateHandler(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	router := gin.Default()
+	ctx := context.Background()
 	defer ctrl.Finish()
 
 	mockService := dns.NewMockService(ctrl)
@@ -45,7 +47,7 @@ func TestUpdateHandler(t *testing.T) {
 	ip := "192.168.1.1"
 
 	t.Run("Update successful", func(t *testing.T) {
-		mockService.EXPECT().Update(domain, ip).Return(nil)
+		mockService.EXPECT().Update(ctx, domain, ip).Return(nil)
 
 		req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/update?domain=%s&ip=%s", domain, ip), nil)
 		resp := httptest.NewRecorder()
@@ -74,7 +76,7 @@ func TestUpdateHandler(t *testing.T) {
 	})
 
 	t.Run("Failed unexpected error", func(t *testing.T) {
-		mockService.EXPECT().Update(domain, ip).Return(fmt.Errorf("some error"))
+		mockService.EXPECT().Update(ctx, domain, ip).Return(fmt.Errorf("some error"))
 
 		req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/update?domain=%s&ip=%s", domain, ip), nil)
 		resp := httptest.NewRecorder()
@@ -88,6 +90,7 @@ func TestUpdateHandler(t *testing.T) {
 func TestGetIpHandler(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	router := gin.Default()
+	ctx := context.Background()
 	defer ctrl.Finish()
 
 	mockService := dns.NewMockService(ctrl)
@@ -97,7 +100,7 @@ func TestGetIpHandler(t *testing.T) {
 	dns := dns.Dns{Domain: "example.com", IP: net.ParseIP("192.168.1.1")}
 
 	t.Run("Retrieve found DNS by domain", func(t *testing.T) {
-		mockService.EXPECT().Find(dns.Domain).Return(&dns, nil)
+		mockService.EXPECT().Find(ctx, dns.Domain).Return(&dns, nil)
 
 		req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/get?domain=%s", dns.Domain), nil)
 		resp := httptest.NewRecorder()
@@ -110,7 +113,7 @@ func TestGetIpHandler(t *testing.T) {
 	})
 
 	t.Run("Not found DNS by domain", func(t *testing.T) {
-		mockService.EXPECT().Find(dns.Domain).Return(nil, nil)
+		mockService.EXPECT().Find(ctx, dns.Domain).Return(nil, nil)
 
 		req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/get?domain=%s", dns.Domain), nil)
 		resp := httptest.NewRecorder()
@@ -130,7 +133,7 @@ func TestGetIpHandler(t *testing.T) {
 	})
 
 	t.Run("Failed unexpected error", func(t *testing.T) {
-		mockService.EXPECT().Find(dns.Domain).Return(nil, fmt.Errorf("some error"))
+		mockService.EXPECT().Find(ctx, dns.Domain).Return(nil, fmt.Errorf("some error"))
 
 		req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/get?domain=%s", dns.Domain), nil)
 		resp := httptest.NewRecorder()

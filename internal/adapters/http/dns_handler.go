@@ -28,7 +28,7 @@ func (h *DNSHandler) UpdateIp(c *gin.Context) {
 		return
 	}
 
-	err := h.service.Update(domain, ip)
+	err := h.service.Update(c.Request.Context(), domain, ip)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -45,7 +45,7 @@ func (h *DNSHandler) GetIp(c *gin.Context) {
 		return
 	}
 
-	record, err := h.service.Find(domain)
+	record, err := h.service.Find(c.Request.Context(), domain)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

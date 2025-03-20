@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -17,14 +18,16 @@ func NewSQLiteDNSRepository(db *sql.DB) *SQLiteDNSRepository {
 	return &SQLiteDNSRepository{db: db}
 }
 
-func (r *SQLiteDNSRepository) Save(dns *dns.Dns) error {
-	_, err := r.db.Exec("REPLACE INTO dns_records (domain, ip) VALUES (?, ?)", dns.Domain, dns.IP.String())
+func (r *SQLiteDNSRepository) Save(ctx context.Context, dns *dns.Dns) error {
+	query := `REPLACE INTO dns_records (domain, ip) VALUES (?, ?)`
+	_, err := r.db.ExecContext(ctx, query, dns.Domain, dns.IP.String())
 	return err
 }
 
-func (r *SQLiteDNSRepository) Find(domain string) (*dns.Dns, error) {
+func (r *SQLiteDNSRepository) Find(ctx context.Context, domain string) (*dns.Dns, error) {
 	var ip string
-	err := r.db.QueryRow("SELECT ip FROM dns_records WHERE domain = ?", domain).Scan(&ip)
+	query := `SELECT ip FROM dns_records WHERE domain = ?`
+	err := r.db.QueryRowContext(ctx, query, domain).Scan(&ip)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil

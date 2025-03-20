@@ -2,11 +2,14 @@
 
 package dns
 
-import "net"
+import (
+	"context"
+	"net"
+)
 
 type Service interface {
-	Update(domain, ip string) error
-	Find(domain string) (*Dns, error)
+	Update(ctx context.Context, domain, ip string) error
+	Find(ctx context.Context, domain string) (*Dns, error)
 }
 
 type service struct {
@@ -17,7 +20,7 @@ func NewService(repository Repository) Service {
 	return &service{repository: repository}
 }
 
-func (s *service) Update(domain, ip string) error {
+func (s *service) Update(ctx context.Context, domain, ip string) error {
 	parseIP := net.ParseIP(ip)
 	if parseIP == nil {
 		return ErrInvalidIP
@@ -28,9 +31,9 @@ func (s *service) Update(domain, ip string) error {
 		return err
 	}
 
-	return s.repository.Save(dns)
+	return s.repository.Save(ctx, dns)
 }
 
-func (s *service) Find(domain string) (*Dns, error) {
-	return s.repository.Find(domain)
+func (s *service) Find(ctx context.Context, domain string) (*Dns, error) {
+	return s.repository.Find(ctx, domain)
 }

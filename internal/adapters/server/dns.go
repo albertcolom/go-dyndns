@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -17,8 +18,10 @@ func NewDns(service dns.Service) *Dns {
 	return &Dns{service: service}
 }
 
-func (s *Dns) Start(addr, net string) {
-	server.HandleFunc(".", s.handleDNSRequest)
+func (s *Dns) Start(ctx context.Context, addr, net string) {
+	server.HandleFunc(".", func(w server.ResponseWriter, r *server.Msg) {
+		s.handleDNSRequest(ctx, w, r)
+	})
 
 	server := &server.Server{Addr: addr, Net: net}
 
@@ -28,7 +31,7 @@ func (s *Dns) Start(addr, net string) {
 	}
 }
 
-func (s *Dns) handleDNSRequest(w server.ResponseWriter, r *server.Msg) {
+func (s *Dns) handleDNSRequest(ctx context.Context, w server.ResponseWriter, r *server.Msg) {
 	msg := new(server.Msg)
 	msg.SetReply(r)
 
@@ -36,7 +39,7 @@ func (s *Dns) handleDNSRequest(w server.ResponseWriter, r *server.Msg) {
 		if question.Qtype == server.TypeA {
 			domainName := strings.TrimSuffix(question.Name, ".")
 
-			record, err := s.service.Find(domainName)
+			record, err := s.service.Find(ctx, domainName)
 			if err != nil {
 				log.Printf("Error finding record for %s: %v", domainName, err)
 				continue

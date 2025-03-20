@@ -1,6 +1,7 @@
 package dns
 
 import (
+	"context"
 	"net"
 	"testing"
 
@@ -14,13 +15,14 @@ func TestUpdateDns(t *testing.T) {
 
 	mockRepository := NewMockRepository(ctrl)
 	service := NewService(mockRepository)
+	ctx := context.Background()
 
 	t.Run("Update successful", func(t *testing.T) {
 		domain := "example.com"
 		ip := net.ParseIP("192.168.1.1")
 
-		mockRepository.EXPECT().Save(&Dns{Domain: domain, IP: ip}).Return(nil)
-		err := service.Update(domain, ip.String())
+		mockRepository.EXPECT().Save(ctx, &Dns{Domain: domain, IP: ip}).Return(nil)
+		err := service.Update(ctx, domain, ip.String())
 
 		assert.NoError(t, err)
 	})
@@ -29,7 +31,7 @@ func TestUpdateDns(t *testing.T) {
 		domain := "example.com"
 		ip := "invalid ip"
 
-		err := service.Update(domain, ip)
+		err := service.Update(ctx, domain, ip)
 
 		assert.Error(t, err)
 		assert.Equal(t, ErrInvalidIP, err)
@@ -39,7 +41,7 @@ func TestUpdateDns(t *testing.T) {
 		domain := "i n v a l i d .domain"
 		ip := "192.168.1.1"
 
-		err := service.Update(domain, ip)
+		err := service.Update(ctx, domain, ip)
 
 		assert.Error(t, err)
 		assert.Equal(t, ErrInvalidDomain, err)
@@ -52,13 +54,14 @@ func TestFindDns(t *testing.T) {
 
 	mockRepository := NewMockRepository(ctrl)
 	service := NewService(mockRepository)
+	ctx := context.Background()
 
 	t.Run("Retrieve found DNS", func(t *testing.T) {
 		domain := "example.com"
 		expected := &Dns{Domain: domain, IP: net.ParseIP("192.168.1.1")}
 
-		mockRepository.EXPECT().Find(domain).Return(expected, nil)
-		result, err := service.Find(domain)
+		mockRepository.EXPECT().Find(ctx, domain).Return(expected, nil)
+		result, err := service.Find(ctx, domain)
 
 		assert.NoError(t, err)
 		assert.Equal(t, expected, result)
@@ -67,8 +70,8 @@ func TestFindDns(t *testing.T) {
 	t.Run("Retrieve nil when not found DNS", func(t *testing.T) {
 		domain := "example.com"
 
-		mockRepository.EXPECT().Find(domain).Return(nil, nil)
-		result, err := service.Find(domain)
+		mockRepository.EXPECT().Find(ctx, domain).Return(nil, nil)
+		result, err := service.Find(ctx, domain)
 
 		assert.NoError(t, err)
 		assert.Nil(t, result)

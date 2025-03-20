@@ -2,7 +2,9 @@
 
 package dns
 
+import "context"
+
 type Repository interface {
-	Save(dns *Dns) error
-	Find(domain string) (*Dns, error)
+	Save(ctx context.Context, dns *Dns) error
+	Find(ctx context.Context, domain string) (*Dns, error)
 }

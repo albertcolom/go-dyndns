@@ -68,9 +68,9 @@ jobs:
 
       - name: Run lint analysis on changed files
         if: ${{ steps.changed-files.outputs.changed_files != '' }}
-        run: |
-          echo "Running golangci-lint on changed files: ${{ steps.changed-files.outputs.changed_files }}"
-          go run github.com/golangci/golangci-lint/cmd/golangci-lint run ${{ steps.changed-files.outputs.changed_files }} --timeout=5m
+        uses: golangci/golangci-lint-action@v7
+        with:
+          args: --path-prefix=${{ steps.changed-files.outputs.changed_files }} --skip-dirs-use-default
 
       - name: Run tests
         run: go test ./...

@@ -28,7 +28,7 @@ jobs:
       - name: Get changed Go files
         id: changed-files
         run: |
-          changed_files=$(git diff --name-only HEAD^ HEAD | grep '\.go$' || true)
+          changed_files=$(git diff --name-only --diff-filter=ACMR HEAD^ HEAD | grep '\.go$' || true)
           # Use EOF to handle multi-line output
           if [ -n "$changed_files" ]; then
             echo "changed_files<<EOF" >> $GITHUB_OUTPUT

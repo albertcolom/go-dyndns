@@ -22,7 +22,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize database client: %v", err)
 	}
-	defer dbClient.Close()
+	defer func() {
+		if err := dbClient.Close(); err != nil {
+			log.Printf("Database close error: %v", err)
+		}
+	}()
 
 	repo := repository.NewSQLiteDNSRepository(dbClient.DB)
 	service := dns.NewService(repo)

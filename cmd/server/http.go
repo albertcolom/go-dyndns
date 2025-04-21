@@ -10,7 +10,7 @@ import (
 
 func StartHTTPServer(service dns.Service, addr string) (*http.Server, chan error) {
 	errChan := make(chan error, 1)
-	handler := http.NewDNSHandler(service)
+	handler := http.NewHandler(service)
 	httpServer := http.NewHTTPServer(handler, addr)
 
 	go func() {

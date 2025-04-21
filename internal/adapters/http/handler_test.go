@@ -21,7 +21,7 @@ func TestHealthHandler(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockService := dns.NewMockService(ctrl)
-	handler := NewDNSHandler(mockService)
+	handler := NewHandler(mockService)
 
 	router.GET("/health", handler.Health)
 
@@ -40,7 +40,7 @@ func TestUpdateHandler(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockService := dns.NewMockService(ctrl)
-	handler := NewDNSHandler(mockService)
+	handler := NewHandler(mockService)
 	router.GET("/update", handler.UpdateIp)
 
 	domain := "example.com"
@@ -94,7 +94,7 @@ func TestGetIpHandler(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockService := dns.NewMockService(ctrl)
-	handler := NewDNSHandler(mockService)
+	handler := NewHandler(mockService)
 	router.GET("/get", handler.GetIp)
 
 	dns := dns.Dns{Domain: "example.com", IP: net.ParseIP("192.168.1.1")}

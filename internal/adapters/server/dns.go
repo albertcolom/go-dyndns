@@ -25,7 +25,7 @@ func (s *Dns) Start(ctx context.Context, addr, net string) error {
 
 	dnsServer := &server.Server{Addr: addr, Net: net}
 
-	return dnsServer.Shutdown()
+	return dnsServer.ListenAndServe()
 }
 
 func (s *Dns) handleDNSRequest(ctx context.Context, w server.ResponseWriter, r *server.Msg) {

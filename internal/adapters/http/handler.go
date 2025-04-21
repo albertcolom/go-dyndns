@@ -7,19 +7,19 @@ import (
 	"go-dyndns/internal/core/dns"
 )
 
-type DNSHandler struct {
+type Handler struct {
 	service dns.Service
 }
 
-func NewDNSHandler(service dns.Service) *DNSHandler {
-	return &DNSHandler{service: service}
+func NewHandler(service dns.Service) *Handler {
+	return &Handler{service: service}
 }
 
-func (h *DNSHandler) Health(c *gin.Context) {
+func (h *Handler) Health(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
-func (h *DNSHandler) UpdateIp(c *gin.Context) {
+func (h *Handler) UpdateIp(c *gin.Context) {
 	domain := c.Query("domain")
 	ip := c.Query("ip")
 
@@ -37,7 +37,7 @@ func (h *DNSHandler) UpdateIp(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Updated " + domain + " to " + ip})
 }
 
-func (h *DNSHandler) GetIp(c *gin.Context) {
+func (h *Handler) GetIp(c *gin.Context) {
 	domain := c.Query("domain")
 
 	if domain == "" {

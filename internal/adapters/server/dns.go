@@ -18,17 +18,14 @@ func NewDns(service dns.Service) *Dns {
 	return &Dns{service: service}
 }
 
-func (s *Dns) Start(ctx context.Context, addr, net string) {
+func (s *Dns) Start(ctx context.Context, addr, net string) error {
 	server.HandleFunc(".", func(w server.ResponseWriter, r *server.Msg) {
 		s.handleDNSRequest(ctx, w, r)
 	})
 
-	server := &server.Server{Addr: addr, Net: net}
+	dnsServer := &server.Server{Addr: addr, Net: net}
 
-	log.Println("Starting DNS server on :53")
-	if err := server.ListenAndServe(); err != nil {
-		log.Fatalf("Failed to start DNS server: %v", err)
-	}
+	return dnsServer.Shutdown()
 }
 
 func (s *Dns) handleDNSRequest(ctx context.Context, w server.ResponseWriter, r *server.Msg) {

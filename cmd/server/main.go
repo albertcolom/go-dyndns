@@ -15,7 +15,7 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	_, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	dbClient, err := db.NewSQLiteClient(cfg.Sqlite.Path)
@@ -27,8 +27,8 @@ func main() {
 	repo := repository.NewSQLiteDNSRepository(dbClient.DB)
 	service := dns.NewService(repo)
 
-	dnsErrChan := StartDNSServer(ctx, service, cfg.Dns.Addr, cfg.Dns.Net)
+	dnsServer, dnsErrChan := StartDNSServer(service, cfg.Dns.Addr, cfg.Dns.Net)
 	httpServer, httpErrChan := StartHTTPServer(service, cfg.Http.Addr)
 
-	WaitForShutdown(cancel, httpServer, httpErrChan, dnsErrChan)
+	WaitForShutdown(cancel, dnsServer, httpServer, httpErrChan, dnsErrChan)
 }

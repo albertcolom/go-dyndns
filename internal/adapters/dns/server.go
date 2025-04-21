@@ -7,24 +7,22 @@ import (
 )
 
 type Server struct {
-	service dns.Service
-	handler *Handler
+	DnsServer *server.Server
 }
 
-func NewDnsServer(service dns.Service) *Server {
+func NewDnsServer(service dns.Service, addr, net string) *Server {
 	handler := NewDnsHandler(service)
-	return &Server{
-		service: service,
-		handler: handler,
-	}
+	dnsServer := &server.Server{Addr: addr, Net: net}
+	server.HandleFunc(".", handler.HandleDNSRequest)
+
+	return &Server{DnsServer: dnsServer}
+
 }
 
-func (s *Server) Start(ctx context.Context, addr, net string) error {
-	server.HandleFunc(".", func(w server.ResponseWriter, r *server.Msg) {
-		s.handler.HandleDNSRequest(ctx, w, r)
-	})
+func (s *Server) Start() error {
+	return s.DnsServer.ListenAndServe()
+}
 
-	dnsServer := &server.Server{Addr: addr, Net: net}
-
-	return dnsServer.ListenAndServe()
+func (s *Server) Shutdown(ctx context.Context) error {
+	return s.DnsServer.ShutdownContext(ctx)
 }

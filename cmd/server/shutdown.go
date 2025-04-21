@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"go-dyndns/internal/adapters/dns"
 	"go-dyndns/internal/adapters/http"
 	"log"
 	"os"
@@ -10,7 +11,7 @@ import (
 	"time"
 )
 
-func WaitForShutdown(cancel context.CancelFunc, httpServer *http.Server, httpErrChan, dnsErrChan chan error) {
+func WaitForShutdown(cancel context.CancelFunc, dnsServer *dns.Server, httpServer *http.Server, httpErrChan, dnsErrChan chan error) {
 	interruptChan := make(chan os.Signal, 1)
 	signal.Notify(interruptChan, os.Interrupt, syscall.SIGTERM)
 
@@ -25,6 +26,12 @@ func WaitForShutdown(cancel context.CancelFunc, httpServer *http.Server, httpErr
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCancel()
+
+	if err := dnsServer.Shutdown(shutdownCtx); err != nil {
+		log.Printf("DNS server shutdown error: %v", err)
+	} else {
+		log.Println("DNS server gracefully stopped")
+	}
 
 	if err := httpServer.Shutdown(shutdownCtx); err != nil {
 		log.Printf("HTTP server shutdown error: %v", err)

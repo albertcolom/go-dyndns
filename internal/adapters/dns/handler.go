@@ -17,7 +17,8 @@ func NewDnsHandler(service dns.Service) *Handler {
 	return &Handler{service: service}
 }
 
-func (h *Handler) HandleDNSRequest(ctx context.Context, w server.ResponseWriter, r *server.Msg) {
+func (h *Handler) HandleDNSRequest(w server.ResponseWriter, r *server.Msg) {
+	ctx := context.Background()
 	msg := new(server.Msg)
 	msg.SetReply(r)
 

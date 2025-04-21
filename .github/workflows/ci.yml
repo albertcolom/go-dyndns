@@ -28,11 +28,15 @@ jobs:
       - name: Get changed Go files
         id: changed-files
         run: |
-          changed_files=$(git diff --name-only --diff-filter=ACMR HEAD^ HEAD | grep '\.go$' | tr '\n' ',' | sed 's/,$//')
-          changed_dirs=$(git diff --name-only --diff-filter=ACMR HEAD^ HEAD | grep '\.go$' | xargs -n1 dirname | sort -u | tr '\n' ',' | sed 's/,$//')
-          
-          echo "changed_files=${changed_files}" >> $GITHUB_OUTPUT
-          echo "changed_dirs=${changed_dirs}" >> $GITHUB_OUTPUT
+          changed_files=$(git diff --name-only --diff-filter=ACMR HEAD^ HEAD | grep '\.go$' || true)
+          # Use EOF to handle multi-line output
+          if [ -n "$changed_files" ]; then
+            echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+            echo "$changed_files" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "changed_files=" >> $GITHUB_OUTPUT
+          fi
 
       - name: Cache Go Vendor Directory
         uses: actions/cache@v3
@@ -62,11 +66,11 @@ jobs:
             go vet ./$pkg
           done
 
-      - name: Run lint analysis of the modified files directories
-        if: ${{ steps.changed-files.outputs.changed_dirs != '' }}
-        uses: golangci/golangci-lint-action@v7
-        with:
-          args: --path-prefix=${{ steps.changed-files.outputs.changed_dirs }} --skip-dirs-use-default
+      - name: Run lint analysis on changed files
+        if: ${{ steps.changed-files.outputs.changed_files != '' }}
+        run: |
+          echo "Running golangci-lint on changed files: ${{ steps.changed-files.outputs.changed_files }}"
+          echo "${{ steps.changed-files.outputs.files }}" | xargs go run github.com/golangci/golangci-lint/cmd/golangci-lint run
 
       - name: Run tests
         run: go test ./...

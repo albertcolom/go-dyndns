@@ -54,7 +54,7 @@ jobs:
         run: go generate ./...
 
       - name: Run static analysis on changed files
-        if: steps.changed-files.outputs.files_count != '0'
+        if: ${{ steps.changed-files.outputs.changed_files != '' }}
         run: |
           packages=$(echo "${{ steps.changed-files.outputs.changed_files }}" | xargs -n1 dirname | sort -u)
           echo "Running go vet on packages: $packages"
@@ -63,7 +63,7 @@ jobs:
           done
 
       - name: Run lint analysis of the modified files directories
-        if: steps.changed-files.outputs.files_count != '0'
+        if: ${{ steps.changed-files.outputs.changed_dirs != '' }}
         uses: golangci/golangci-lint-action@v7
         with:
           args: --path-prefix=${{ steps.changed-files.outputs.changed_dirs }} --skip-dirs-use-default

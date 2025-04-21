@@ -10,11 +10,11 @@ type Server struct {
 	HttpServer *http.Server
 }
 
-func NewHTTPServer(dnsHandler *Handler, addr string) *Server {
+func NewHTTPServer(handler *Handler, addr string) *Server {
 	router := gin.New()
-	router.GET("/health", dnsHandler.Health)
-	router.GET("/update", dnsHandler.UpdateIp)
-	router.GET("/get", dnsHandler.GetIp)
+	router.GET("/health", handler.Health)
+	router.GET("/update", handler.UpdateIp)
+	router.GET("/get", handler.GetIp)
 
 	httpServer := &http.Server{
 		Addr:    addr,

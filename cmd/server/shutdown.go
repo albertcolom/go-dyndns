@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -27,17 +28,27 @@ func WaitForShutdown(cancel context.CancelFunc, dnsServer *dns.Server, httpServe
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCancel()
 
-	if err := dnsServer.Shutdown(shutdownCtx); err != nil {
-		log.Printf("DNS server shutdown error: %v", err)
-	} else {
-		log.Println("DNS server gracefully stopped")
-	}
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-	if err := httpServer.Shutdown(shutdownCtx); err != nil {
-		log.Printf("HTTP server shutdown error: %v", err)
-	} else {
-		log.Println("HTTP server gracefully stopped")
-	}
+	go func() {
+		defer wg.Done()
+		if err := dnsServer.Shutdown(shutdownCtx); err != nil {
+			log.Printf("DNS server shutdown error: %v", err)
+		} else {
+			log.Println("DNS server stopped gracefully")
+		}
+	}()
 
+	go func() {
+		defer wg.Done()
+		if err := httpServer.Shutdown(shutdownCtx); err != nil {
+			log.Printf("HTTP server shutdown error: %v", err)
+		} else {
+			log.Println("HTTP server stopped gracefully")
+		}
+	}()
+
+	wg.Wait()
 	cancel()
 }

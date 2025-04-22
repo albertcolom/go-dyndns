@@ -2,17 +2,27 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware() gin.HandlerFunc {
+func AuthMiddleware(expectedToken string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
+		token := c.Query("token")
+
+		if token == "" {
+			authHeader := c.GetHeader("Authorization")
+			if strings.HasPrefix(authHeader, "Bearer ") {
+				token = strings.TrimPrefix(authHeader, "Bearer ")
+			}
+		}
+
+		if token != expectedToken {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 			return
 		}
+
 		c.Next()
 	}
 }

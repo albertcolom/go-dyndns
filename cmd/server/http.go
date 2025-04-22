@@ -8,10 +8,10 @@ import (
 	"go-dyndns/internal/core/dns"
 )
 
-func StartHTTPServer(service dns.Service, addr string) (*http.Server, chan error) {
+func StartHTTPServer(service dns.Service, addr, token string) (*http.Server, chan error) {
 	errChan := make(chan error, 1)
 	handler := http.NewHandler(service)
-	httpServer := http.NewHTTPServer(handler, addr)
+	httpServer := http.NewHTTPServer(handler, addr, token)
 
 	go func() {
 		log.Printf("Starting HTTP server on %s", addr)

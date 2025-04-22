@@ -1,6 +1,7 @@
 package dns
 
 import (
+	"net"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -50,14 +51,14 @@ func TestValidateDomain(t *testing.T) {
 		{
 			name:     "invalid domain (empty string)",
 			domain:   "",
-			expected: ErrInvalidDomain,
+			expected: ErrDomainEmpty,
 		},
 	}
 
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
-			dns := Dns{Domain: d.domain}
-			err := dns.ValidateDomain()
+			dns := Dns{Domain: d.domain, IP: net.ParseIP("127.0.0.1")}
+			err := dns.Validate()
 			assert.Equal(t, d.expected, err)
 		})
 	}

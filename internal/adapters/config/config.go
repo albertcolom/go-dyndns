@@ -14,7 +14,8 @@ type Config struct {
 }
 
 type HttpConfig struct {
-	Addr string
+	Addr  string
+	Token string
 }
 
 type DnsConfig struct {

@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"github.com/gin-gonic/gin"
+	"go-dyndns/internal/adapters/http/middleware"
 	"net/http"
 )
 
@@ -10,11 +11,17 @@ type Server struct {
 	HttpServer *http.Server
 }
 
-func NewHTTPServer(handler *Handler, addr string) *Server {
+func NewHTTPServer(handler *Handler, addr, token string) *Server {
 	router := gin.New()
-	router.GET("/health", handler.Health)
-	router.GET("/update", handler.UpdateIp)
-	router.GET("/get", handler.GetIp)
+	v1 := router.Group("/v1")
+	{
+		v1.GET("/health", handler.Health)
+		protected := v1.Group("").Use(middleware.AuthMiddleware(token))
+		{
+			protected.GET("/update", handler.UpdateIp)
+			protected.GET("/get", handler.GetIp)
+		}
+	}
 
 	httpServer := &http.Server{
 		Addr:    addr,

@@ -12,7 +12,23 @@ type Dns struct {
 	IP     net.IP `json:"ip"`
 }
 
-func (d *Dns) ValidateDomain() error {
+func (d *Dns) Validate() error {
+	if err := d.validateDomain(); err != nil {
+		return err
+	}
+	if d.IP == nil || d.IP.To4() == nil {
+		return ErrInvalidIP
+	}
+	return nil
+}
+
+func (d *Dns) validateDomain() error {
+	if d.Domain == "" {
+		return ErrDomainEmpty
+	}
+	if len(d.Domain) > 255 {
+		return ErrInvalidDomainLen
+	}
 	match, _ := regexp.MatchString(domainPattern, d.Domain)
 	if !match {
 		return ErrInvalidDomain

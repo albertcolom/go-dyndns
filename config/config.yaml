@@ -1,5 +1,6 @@
 http:
   addr: ":8080"
+  token: "a38b721f-e8c8-4cdf-95b0-baa13ee5ddd5"
 dns:
   addr: ":53"
   net: "udp"

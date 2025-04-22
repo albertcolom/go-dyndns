@@ -32,7 +32,7 @@ func main() {
 	service := dns.NewService(repo)
 
 	dnsServer, dnsErrChan := StartDNSServer(service, cfg.Dns.Addr, cfg.Dns.Net)
-	httpServer, httpErrChan := StartHTTPServer(service, cfg.Http.Addr)
+	httpServer, httpErrChan := StartHTTPServer(service, cfg.Http.Addr, cfg.Http.Token)
 
 	WaitForShutdown(cancel, dnsServer, httpServer, httpErrChan, dnsErrChan)
 }

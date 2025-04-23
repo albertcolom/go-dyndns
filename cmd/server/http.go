@@ -14,9 +14,9 @@ func StartHTTPServer(service dns.Service, addr, token string) (*http.Server, cha
 	httpServer := http.NewHTTPServer(handler, addr, token)
 
 	go func() {
-		log.Printf("Starting HTTP server on %s", addr)
+		log.Printf("[HTTP] Starting server on %s", addr)
 		if err := httpServer.Start(); err != nil {
-			errChan <- fmt.Errorf("HTTP server error: %w", err)
+			errChan <- fmt.Errorf("[HTTP] Server error: %w", err)
 		}
 	}()
 

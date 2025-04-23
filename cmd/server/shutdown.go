@@ -34,18 +34,18 @@ func WaitForShutdown(cancel context.CancelFunc, dnsServer *dns.Server, httpServe
 	go func() {
 		defer wg.Done()
 		if err := dnsServer.Shutdown(shutdownCtx); err != nil {
-			log.Printf("DNS server shutdown error: %v", err)
+			log.Printf("[DNS] Server shutdown error: %v", err)
 		} else {
-			log.Println("DNS server stopped gracefully")
+			log.Println("[DNS] Server stopped gracefully")
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		if err := httpServer.Shutdown(shutdownCtx); err != nil {
-			log.Printf("HTTP server shutdown error: %v", err)
+			log.Printf("[HTTP] Server shutdown error: %v", err)
 		} else {
-			log.Println("HTTP server stopped gracefully")
+			log.Println("[HTTP] Server stopped gracefully")
 		}
 	}()
 

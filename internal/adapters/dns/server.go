@@ -3,6 +3,7 @@ package dns
 import (
 	"context"
 	server "github.com/miekg/dns"
+	"go-dyndns/internal/adapters/dns/middleware"
 	"go-dyndns/internal/core/dns"
 )
 
@@ -13,7 +14,7 @@ type Server struct {
 func NewDnsServer(service dns.Service, addr, net string) *Server {
 	handler := NewDnsHandler(service)
 	dnsServer := &server.Server{Addr: addr, Net: net}
-	server.HandleFunc(".", handler.HandleDNSRequest)
+	server.HandleFunc(".", middleware.LoggingMiddleware(handler.HandleDNSRequest))
 
 	return &Server{DnsServer: dnsServer}
 

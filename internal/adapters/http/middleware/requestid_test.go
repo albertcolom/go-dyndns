@@ -18,11 +18,14 @@ func TestRequestIdMiddleware(t *testing.T) {
 		router := gin.New()
 		router.Use(RequestIdMiddleware())
 
+		var receivedRequestID string
+
 		router.GET("/test", func(c *gin.Context) {
 			requestID, exists := c.Get("RequestID")
 			assert.True(t, exists)
 
-			_, err := uuid.Parse(requestID.(string))
+			receivedRequestID = requestID.(string)
+			_, err := uuid.Parse(receivedRequestID)
 			assert.NoError(t, err)
 
 			c.Status(http.StatusOK)
@@ -31,11 +34,8 @@ func TestRequestIdMiddleware(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodGet, "/test", nil)
 		router.ServeHTTP(w, req)
 
-		responseHeader := w.Header().Get("X-Request-ID")
-		assert.NotEmpty(t, responseHeader)
-
-		_, err := uuid.Parse(responseHeader)
-		assert.NoError(t, err)
+		assert.NotEmpty(t, receivedRequestID)
+		assert.Equal(t, receivedRequestID, w.Header().Get("X-Request-ID"))
 	})
 
 	t.Run("when X-Request-ID header is present", func(t *testing.T) {
@@ -65,11 +65,14 @@ func TestRequestIdMiddleware(t *testing.T) {
 		router := gin.New()
 		router.Use(RequestIdMiddleware())
 
+		var receivedRequestID string
+
 		router.GET("/test", func(c *gin.Context) {
 			requestID, exists := c.Get("RequestID")
 			assert.True(t, exists)
 
-			_, err := uuid.Parse(requestID.(string))
+			receivedRequestID = requestID.(string)
+			_, err := uuid.Parse(receivedRequestID)
 			assert.NoError(t, err)
 
 			c.Status(http.StatusOK)
@@ -79,10 +82,7 @@ func TestRequestIdMiddleware(t *testing.T) {
 		req.Header.Set("X-Request-ID", "")
 		router.ServeHTTP(w, req)
 
-		responseHeader := w.Header().Get("X-Request-ID")
-		assert.NotEmpty(t, responseHeader)
-
-		_, err := uuid.Parse(responseHeader)
-		assert.NoError(t, err)
+		assert.NotEmpty(t, receivedRequestID)
+		assert.Equal(t, receivedRequestID, w.Header().Get("X-Request-ID"))
 	})
 }

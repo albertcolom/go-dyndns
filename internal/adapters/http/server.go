@@ -13,6 +13,8 @@ type Server struct {
 
 func NewHTTPServer(handler *Handler, addr, token string) *Server {
 	router := gin.New()
+	router.Use(middleware.RequestIdMiddleware())
+	router.Use(gin.Recovery())
 	v1 := router.Group("/v1")
 	{
 		v1.GET("/health", handler.Health)

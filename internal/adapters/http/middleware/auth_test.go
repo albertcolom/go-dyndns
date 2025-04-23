@@ -53,9 +53,14 @@ func TestAuthMiddleware(t *testing.T) {
 	}
 
 	for _, d := range data {
+		gin.SetMode(gin.TestMode)
+
 		t.Run(d.name, func(t *testing.T) {
-			router := gin.New()
-			router.GET("/test", AuthMiddleware("valid_token"), func(c *gin.Context) {
+			w := httptest.NewRecorder()
+			ctx, router := gin.CreateTestContext(w)
+			router.Use(AuthMiddleware("valid_token"))
+
+			router.GET("/test", func(c *gin.Context) {
 				c.Status(http.StatusOK)
 			})
 
@@ -70,11 +75,10 @@ func TestAuthMiddleware(t *testing.T) {
 				req.Header.Set("Authorization", d.header)
 			}
 
-			w := httptest.NewRecorder()
+			ctx.Request = req
 			router.ServeHTTP(w, req)
 
 			assert.Equal(t, d.expectedStatus, w.Code)
-
 			if d.expectError {
 				assert.Contains(t, w.Body.String(), "Unauthorized")
 			}

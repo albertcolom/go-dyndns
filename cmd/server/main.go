@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"go-dyndns/internal/adapters/config"
+	server "go-dyndns/internal/adapters/dns"
+	"go-dyndns/internal/adapters/http"
 	"go-dyndns/internal/adapters/repository"
 	"go-dyndns/internal/core/dns"
 	"go-dyndns/pkg/db"
@@ -31,8 +33,12 @@ func main() {
 	repo := repository.NewSQLiteDNSRepository(dbClient.DB)
 	service := dns.NewService(repo)
 
-	dnsServer, dnsErrChan := StartDNSServer(service, cfg.Dns.Addr, cfg.Dns.Net)
-	httpServer, httpErrChan := StartHTTPServer(service, cfg.Http.Addr, cfg.Http.Token)
+	dnsServer := server.NewDnsServer(service, cfg.Dns.Addr, cfg.Dns.Net)
+	dnsErrChan := StartDNSServer(dnsServer)
+
+	httpHandler := http.NewHandler(service)
+	httpServer := http.NewHTTPServer(httpHandler, cfg.Http.Addr, cfg.Http.Token)
+	httpErrChan := StartHTTPServer(httpServer)
 
 	WaitForShutdown(cancel, dnsServer, httpServer, httpErrChan, dnsErrChan)
 }

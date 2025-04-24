@@ -2,25 +2,25 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
-	"log"
+	"go-dyndns/pkg/logger"
 	"time"
 )
 
-func LoggerMiddleware() gin.HandlerFunc {
+func LoggerMiddleware(log logger.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 
 		c.Next()
 
-		duration := time.Since(start)
-		statusCode := c.Writer.Status()
-		method := c.Request.Method
-		fullURL := c.Request.URL.RequestURI()
-		clientIP := c.ClientIP()
-		requestID := c.GetString("RequestID")
-
-		log.Printf("[HTTP] %s %s | %d | %s | %s | %s",
-			method, fullURL, statusCode, duration, clientIP, requestID,
+		log.Info(
+			"HTTP",
+			"Request",
+			logger.Field{Key: "method", Value: c.Request.Method},
+			logger.Field{Key: "path", Value: c.Request.URL.Path},
+			logger.Field{Key: "status", Value: c.Writer.Status()},
+			logger.Field{Key: "client_ip", Value: c.ClientIP()},
+			logger.Field{Key: "duration", Value: time.Since(start)},
+			logger.Field{Key: "request_id", Value: c.GetString("RequestID")},
 		)
 	}
 }

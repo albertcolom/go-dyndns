@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"go-dyndns/internal/adapters/http/middleware"
+	"go-dyndns/pkg/logger"
 	"net/http"
 )
 
@@ -11,9 +12,9 @@ type Server struct {
 	HttpServer *http.Server
 }
 
-func NewHTTPServer(handler *Handler, addr, token string) *Server {
+func NewHTTPServer(handler *Handler, addr, token string, log logger.Logger) *Server {
 	router := gin.New()
-	router.Use(middleware.LoggerMiddleware())
+	router.Use(middleware.LoggerMiddleware(log))
 	router.Use(gin.Recovery())
 	router.Use(middleware.RequestIdMiddleware())
 	v1 := router.Group("/v1")

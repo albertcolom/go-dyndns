@@ -4,7 +4,7 @@ import (
 	"context"
 	"go-dyndns/internal/adapters/dns"
 	"go-dyndns/internal/adapters/http"
-	"log"
+	"go-dyndns/pkg/logger"
 	"os"
 	"os/signal"
 	"sync"
@@ -12,18 +12,26 @@ import (
 	"time"
 )
 
-func WaitForShutdown(cancel context.CancelFunc, dnsServer *dns.Server, httpServer *http.Server, httpErrChan, dnsErrChan chan error) {
+func WaitForShutdown(
+	cancel context.CancelFunc,
+	dnsServer *dns.Server,
+	httpServer *http.Server,
+	httpErrChan, dnsErrChan chan error,
+	log logger.Logger,
+) {
 	interruptChan := make(chan os.Signal, 1)
 	signal.Notify(interruptChan, os.Interrupt, syscall.SIGTERM)
 
 	select {
 	case <-interruptChan:
-		log.Println("Received shutdown signal, initiating graceful shutdown...")
+		log.Info("SYSTEM", "Received shutdown signal")
 	case err := <-httpErrChan:
-		log.Printf("Server error: %v, initiating shutdown...", err)
+		log.Error("HTTP", "HTTP Server error", logger.Field{Key: "error", Value: err})
 	case err := <-dnsErrChan:
-		log.Printf("Server error: %v, initiating shutdown...", err)
+		log.Error("DNS", "DNS Server error", logger.Field{Key: "error", Value: err})
 	}
+
+	log.Info("APP", "Initiating graceful shutdown")
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCancel()
@@ -34,18 +42,18 @@ func WaitForShutdown(cancel context.CancelFunc, dnsServer *dns.Server, httpServe
 	go func() {
 		defer wg.Done()
 		if err := dnsServer.Shutdown(shutdownCtx); err != nil {
-			log.Printf("[DNS] Server shutdown error: %v", err)
+			log.Error("DNS", "Server shutdown error", logger.Field{Key: "error", Value: err})
 		} else {
-			log.Println("[DNS] Server stopped gracefully")
+			log.Info("DNS", "Server stopped gracefully")
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		if err := httpServer.Shutdown(shutdownCtx); err != nil {
-			log.Printf("[HTTP] Server shutdown error: %v", err)
+			log.Error("HTTP", "Server shutdown error", logger.Field{Key: "error", Value: err})
 		} else {
-			log.Println("[HTTP] Server stopped gracefully")
+			log.Info("HTTP", "Server stopped gracefully")
 		}
 	}()
 

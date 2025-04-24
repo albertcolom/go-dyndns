@@ -3,16 +3,21 @@ package main
 import (
 	"fmt"
 	"go-dyndns/internal/adapters/dns"
-	"log"
+	"go-dyndns/pkg/logger"
 )
 
-func StartDNSServer(s *dns.Server) chan error {
+func StartDNSServer(s *dns.Server, log logger.Logger) chan error {
 	errChan := make(chan error, 1)
 
 	go func() {
-		log.Printf("[DNS] Starting server on %s (%s)", s.DnsServer.Addr, s.DnsServer.Net)
+		log.Info(
+			"DNS",
+			"Starting server",
+			logger.Field{Key: "addr", Value: s.DnsServer.Addr},
+			logger.Field{Key: "net", Value: s.DnsServer.Net},
+		)
 		if err := s.Start(); err != nil {
-			errChan <- fmt.Errorf("[DNS] Server error: %w", err)
+			errChan <- fmt.Errorf("DNS server error: %w", err)
 		}
 	}()
 

@@ -2,12 +2,12 @@ package middleware
 
 import (
 	"github.com/miekg/dns"
-	"log"
+	"go-dyndns/pkg/logger"
 	"net"
 	"time"
 )
 
-func LoggingMiddleware(next dns.HandlerFunc) dns.HandlerFunc {
+func LoggingMiddleware(log logger.Logger, next dns.HandlerFunc) dns.HandlerFunc {
 	return func(w dns.ResponseWriter, r *dns.Msg) {
 		start := time.Now()
 
@@ -19,12 +19,16 @@ func LoggingMiddleware(next dns.HandlerFunc) dns.HandlerFunc {
 			qType = dns.TypeToString[r.Question[0].Qtype]
 		}
 
-		duration := time.Since(start)
 		clientIP, _, _ := net.SplitHostPort(w.RemoteAddr().String())
-		rCode := dns.RcodeToString[r.Rcode]
 
-		log.Printf("[DNS] %s IN %s | %s | %s | %s",
-			domain, qType, rCode, duration, clientIP,
+		log.Info(
+			"DNS",
+			"Request",
+			logger.Field{Key: "domain", Value: domain},
+			logger.Field{Key: "type", Value: qType},
+			logger.Field{Key: "code", Value: dns.RcodeToString[r.Rcode]},
+			logger.Field{Key: "client_ip", Value: clientIP},
+			logger.Field{Key: "duration", Value: time.Since(start)},
 		)
 	}
 }

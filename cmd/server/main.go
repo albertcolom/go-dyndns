@@ -33,7 +33,8 @@ func main() {
 	repo := repository.NewSQLiteDNSRepository(dbClient.DB)
 	service := dns.NewService(repo)
 
-	dnsServer := server.NewDnsServer(service, cfg.Dns.Addr, cfg.Dns.Net)
+	dnsHandler := server.NewDnsHandler(service)
+	dnsServer := server.NewDnsServer(dnsHandler, cfg.Dns.Addr, cfg.Dns.Net)
 	dnsErrChan := StartDNSServer(dnsServer)
 
 	httpHandler := http.NewHandler(service)

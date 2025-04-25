@@ -1,11 +1,17 @@
 package config
 
 import (
+	"bytes"
+	"embed"
+	"fmt"
 	"log"
 	"strings"
 
 	"github.com/spf13/viper"
 )
+
+//go:embed config.yaml
+var configFS embed.FS
 
 type Config struct {
 	Http   HttpConfig

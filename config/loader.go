@@ -34,15 +34,17 @@ type SqliteConfig struct {
 }
 
 func LoadConfig() (*Config, error) {
-	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath("./config")
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
-	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("Error reading config file: %v", err)
-		return nil, err
+	fileData, err := configFS.ReadFile("config.yaml")
+	if err != nil {
+		return nil, fmt.Errorf("failed to read embedded config: %w", err)
+	}
+
+	if err := viper.ReadConfig(bytes.NewReader(fileData)); err != nil {
+		return nil, fmt.Errorf("failed to read config: %w", err)
 	}
 
 	var config Config

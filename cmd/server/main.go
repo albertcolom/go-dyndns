@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"go-dyndns/internal/adapters/config"
+	"go-dyndns/config"
 	server "go-dyndns/internal/adapters/dns"
 	"go-dyndns/internal/adapters/http"
 	"go-dyndns/internal/adapters/repository"

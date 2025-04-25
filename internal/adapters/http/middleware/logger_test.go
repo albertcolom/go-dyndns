@@ -1,45 +1,50 @@
 package middleware
 
 import (
-	"bytes"
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
-	"io"
-	"log"
+	"go-dyndns/pkg/logger"
+	"go.uber.org/mock/gomock"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
 func TestLoggerMiddleware(t *testing.T) {
-	var logBuf bytes.Buffer
-	log.SetOutput(&logBuf)
-	defer log.SetOutput(io.Discard)
-
 	gin.SetMode(gin.TestMode)
 
 	t.Run("logs request details correctly", func(t *testing.T) {
-		w := httptest.NewRecorder()
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockLogger := logger.NewMockLogger(ctrl)
+
+		mockLogger.EXPECT().Info(
+			"HTTP",
+			"Request",
+			logger.Field{Key: "method", Value: "GET"},
+			logger.Field{Key: "path", Value: "/test"},
+			logger.Field{Key: "status", Value: 200},
+			logger.Field{Key: "client_ip", Value: "1.2.3.4"},
+			gomock.Any(),
+			logger.Field{Key: "request_id", Value: "test-request-id"},
+		)
+
 		router := gin.New()
-		router.Use(func(c *gin.Context) {
-			c.Set("RequestID", "test-request-id")
-		})
-		router.Use(LoggerMiddleware())
+		router.Use(LoggerMiddleware(mockLogger))
 
 		router.GET("/test", func(c *gin.Context) {
-			c.String(http.StatusOK, "OK")
+			c.Set("RequestID", "test-request-id")
+			c.Status(http.StatusOK)
 		})
 
-		req, _ := http.NewRequest(http.MethodGet, "/test?param=value", nil)
-		req.RemoteAddr = "192.168.1.1:12345"
+		req := httptest.NewRequest("GET", "/test?foo=bar", nil)
+		req.RemoteAddr = "1.2.3.4:12345"
+		w := httptest.NewRecorder()
+
 		router.ServeHTTP(w, req)
 
-		logOutput := logBuf.String()
-
-		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Contains(t, logOutput, "[HTTP] GET /test?param=value")
-		assert.Contains(t, logOutput, "| 200 |")      // Status code
-		assert.Contains(t, logOutput, "192.168.1.1")  // Client IP
-		assert.Contains(t, logOutput, "test-request") // Request ID
+		if w.Code != http.StatusOK {
+			t.Errorf("Expected 200 but got %d", w.Code)
+		}
 	})
 }

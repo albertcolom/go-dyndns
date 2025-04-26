@@ -1,44 +1,71 @@
 package main
 
 import (
-	"database/sql"
 	"errors"
+	"flag"
+	"fmt"
+	"go-dyndns/config"
 	"log"
 
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/sqlite3"
+	_ "github.com/golang-migrate/migrate/v4/database/sqlite3"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	_ "github.com/mattn/go-sqlite3"
-)
-
-const (
-	dbPath     = "./app.db"
-	migrations = "file://database/migrations"
 )
 
 func main() {
-	db, err := sql.Open("sqlite3", dbPath)
+	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Fatalf("failed to open database: %v", err)
+		log.Fatalf("Failed to load config: %v", err)
 	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			log.Printf("Database close error: %v", err)
+
+	upFlag := flag.Bool("up", false, "Apply all available migrations")
+	downFlag := flag.Bool("down", false, "Rollback the most recent migration")
+	versionFlag := flag.Bool("version", false, "Show the current migration version")
+	flag.Parse()
+
+	dbURL := "sqlite3://" + cfg.Sqlite.Path
+	migrationsPath := "file://database/migrations"
+
+	m, err := migrate.New(migrationsPath, dbURL)
+	if err != nil {
+		log.Fatalf("failed to initialize migrate: %v", err)
+	}
+
+	if *upFlag {
+		if err := m.Up(); err != nil {
+			if errors.Is(err, migrate.ErrNoChange) {
+				fmt.Println("No new migrations to apply.")
+			} else {
+				log.Fatalf("migration failed: %v", err)
+			}
+		} else {
+			fmt.Println("Migrations applied successfully.")
 		}
-	}()
-
-	driver, err := sqlite3.WithInstance(db, &sqlite3.Config{})
-	if err != nil {
-		log.Fatalf("failed to create migrate driver: %v", err)
+		return
 	}
 
-	m, err := migrate.NewWithDatabaseInstance(migrations, "sqlite3", driver)
-	if err != nil {
-		log.Fatalf("failed to create migrate instance: %v", err)
+	if *downFlag {
+		if err := m.Steps(-1); err != nil {
+			log.Fatalf("failed to rollback migration: %v", err)
+		} else {
+			fmt.Println("Most recent migration rolled back successfully.")
+		}
+		return
 	}
 
-	err = m.Up()
-	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		log.Fatalf("failed to apply migrations: %v", err)
+	if *versionFlag {
+		version, dirty, err := m.Version()
+		if err != nil {
+			log.Fatalf("failed to get version: %v", err)
+		}
+		if dirty {
+			fmt.Printf("Current version: %d (dirty)\n", version)
+		} else {
+			fmt.Printf("Current version: %d\n", version)
+		}
+		return
 	}
+
+	fmt.Println("Usage:")
+	flag.PrintDefaults()
 }

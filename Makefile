@@ -7,8 +7,14 @@ help: ## Show help
 vendor: ## Install dependencies using vendoring
 	go mod vendor
 
-migrate: ## Apply migrations
-	go run ./cmd/migrations/main.go
+migrate-up: ## Apply all available migrations
+	go run ./cmd/migrations -up
+
+migrate-down: ## Rollback the most recent migration
+	go run ./cmd/migrations -down
+
+migrate-version: ## Show the current migration version
+	go run ./cmd/migrations -version
 
 generate: ## Generate
 	go generate ./...

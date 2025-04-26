@@ -2,6 +2,8 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
+	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -10,8 +12,13 @@ type Client struct {
 	DB *sql.DB
 }
 
-func NewSQLiteClient(dbPath string) (*Client, error) {
-	db, err := sql.Open("sqlite3", dbPath)
+func NewSQLitClient(dsn string) (*Client, error) {
+	driver, source, found := strings.Cut(dsn, "://")
+	if !found {
+		return nil, fmt.Errorf("invalid DSN format: missing scheme (://): %s", dsn)
+	}
+
+	db, err := sql.Open(driver, source)
 	if err != nil {
 		return nil, err
 	}

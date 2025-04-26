@@ -14,9 +14,9 @@ import (
 var configFS embed.FS
 
 type Config struct {
-	Http   HttpConfig
-	Dns    DnsConfig
-	Sqlite SqliteConfig
+	Http HttpConfig
+	Dns  DnsConfig
+	Db   Db
 }
 
 type HttpConfig struct {
@@ -29,8 +29,8 @@ type DnsConfig struct {
 	Net  string
 }
 
-type SqliteConfig struct {
-	Path string
+type Db struct {
+	Dsn string
 }
 
 func LoadConfig() (*Config, error) {

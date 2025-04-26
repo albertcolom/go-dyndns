@@ -23,10 +23,7 @@ func main() {
 	versionFlag := flag.Bool("version", false, "Show the current migration version")
 	flag.Parse()
 
-	dbURL := "sqlite3://" + cfg.Sqlite.Path
-	migrationsPath := "file://database/migrations"
-
-	m, err := migrate.New(migrationsPath, dbURL)
+	m, err := migrate.New("file://database/migrations", cfg.Db.Dsn)
 	if err != nil {
 		log.Fatalf("failed to initialize migrate: %v", err)
 	}

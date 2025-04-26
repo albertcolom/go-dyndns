@@ -4,5 +4,5 @@ http:
 dns:
   addr: ":53"
   net: "udp"
-sqlite:
-  path: "./app.db"
+db:
+  dsn: "sqlite3://./app.db"

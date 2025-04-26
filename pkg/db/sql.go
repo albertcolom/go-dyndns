@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -12,10 +14,20 @@ type Client struct {
 	DB *sql.DB
 }
 
-func NewSQLitClient(dsn string) (*Client, error) {
+func NewSqlClient(dsn string) (*Client, error) {
 	driver, source, found := strings.Cut(dsn, "://")
 	if !found {
 		return nil, fmt.Errorf("invalid DSN format: missing scheme (://): %s", dsn)
+	}
+
+	switch driver {
+	case "sqlite", "sqlite3":
+		driver = "sqlite3"
+	case "postgres", "postgresql":
+		driver = "postgres"
+	case "mysql":
+	default:
+		return nil, fmt.Errorf("unsupported database driver: %s", driver)
 	}
 
 	db, err := sql.Open(driver, source)

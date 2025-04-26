@@ -26,7 +26,7 @@ func main() {
 	_, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	dbClient, err := db.NewSQLitClient(cfg.Db.Dsn)
+	dbClient, err := db.NewSqlClient(cfg.Db.Dsn)
 	if err != nil {
 		l.Fatal("APP", "Failed to initialize database client", logger.Field{Key: "error", Value: err})
 	}

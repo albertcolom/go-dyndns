@@ -1,1 +1,1 @@
-DROP TABLE `dns_records`;
+DROP TABLE IF EXISTS dns_records;

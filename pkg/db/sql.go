@@ -11,7 +11,8 @@ import (
 )
 
 type Client struct {
-	DB *sql.DB
+	DB     *sql.DB
+	Driver string
 }
 
 func NewSqlClient(dsn string) (*Client, error) {
@@ -39,7 +40,7 @@ func NewSqlClient(dsn string) (*Client, error) {
 		return nil, err
 	}
 
-	return &Client{DB: db}, nil
+	return &Client{DB: db, Driver: driver}, nil
 }
 
 func (c *Client) Close() error {

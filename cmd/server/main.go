@@ -36,6 +36,10 @@ func main() {
 		}
 	}()
 
+	if dbClient.Driver != "sqlite3" {
+		l.Fatal("APP", "Unsupported SQL driver", logger.Field{Key: "diver", Value: dbClient.Driver})
+	}
+
 	repo := repository.NewSQLiteDNSRepository(dbClient.DB)
 	service := dns.NewService(repo)
 

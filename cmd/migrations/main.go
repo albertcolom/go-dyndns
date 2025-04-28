@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"go-dyndns/config"
+	"go-dyndns/pkg/db"
 	"log"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -18,15 +19,20 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
+	dsn, err := db.ParseDSN(cfg.Db.Dsn)
+	if err != nil {
+		log.Fatalf("Failed to parse dsn: %v", err)
+	}
+
+	m, err := migrate.New("file://database/migrations", dsn.Normalized)
+	if err != nil {
+		log.Fatalf("failed to initialize migrate: %v", err)
+	}
+
 	upFlag := flag.Bool("up", false, "Apply all available migrations")
 	downFlag := flag.Bool("down", false, "Rollback the most recent migration")
 	versionFlag := flag.Bool("version", false, "Show the current migration version")
 	flag.Parse()
-
-	m, err := migrate.New("file://database/migrations", cfg.Db.Dsn)
-	if err != nil {
-		log.Fatalf("failed to initialize migrate: %v", err)
-	}
 
 	if *upFlag {
 		if err := m.Up(); err != nil {

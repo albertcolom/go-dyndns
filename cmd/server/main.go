@@ -26,7 +26,16 @@ func main() {
 	_, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	dbClient, err := db.NewSqlClient(cfg.Db.Dsn)
+	dsn, err := db.ParseDSN(cfg.Db.Dsn)
+	if err != nil {
+		l.Fatal("APP", "Failed to parse DSN", logger.Field{Key: "error", Value: err})
+	}
+
+	if dsn.Driver != "sqlite3" {
+		l.Fatal("APP", "Unsupported SQL driver", logger.Field{Key: "diver", Value: dsn.Driver})
+	}
+
+	dbClient, err := db.NewSqlClient(dsn)
 	if err != nil {
 		l.Fatal("APP", "Failed to initialize database client", logger.Field{Key: "error", Value: err})
 	}
@@ -35,10 +44,6 @@ func main() {
 			l.Error("APP", "Database client close error", logger.Field{Key: "error", Value: err})
 		}
 	}()
-
-	if dbClient.Driver != "sqlite3" {
-		l.Fatal("APP", "Unsupported SQL driver", logger.Field{Key: "diver", Value: dbClient.Driver})
-	}
 
 	repo := repository.NewSQLiteDNSRepository(dbClient.DB)
 	service := dns.NewService(repo)

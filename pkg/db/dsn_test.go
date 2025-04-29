@@ -26,10 +26,10 @@ func TestParseDSNSuccess(t *testing.T) {
 			expectedNormalized: "postgres://user:password@localhost:5432/dbname",
 		},
 		{
-			raw:                "mysql://user:password@localhost:3306/dbname",
+			raw:                "mysql://user:password@tcp(localhost:3306)/dbname",
 			expectedDriver:     "mysql",
-			expectedDataSource: "user:password@localhost:3306/dbname",
-			expectedNormalized: "mysql://user:password@localhost:3306/dbname",
+			expectedDataSource: "user:password@tcp(localhost:3306)/dbname",
+			expectedNormalized: "mysql://user:password@tcp(localhost:3306)/dbname",
 		},
 		{
 			raw:                "postgresql://user@localhost:5432/dbname",
@@ -56,12 +56,16 @@ func TestParseDSNError(t *testing.T) {
 		expectedError string
 	}{
 		{
+			raw:           "mysql://user:password@localhost:3306/dbname",
+			expectedError: "invalid DSN format: mysql://user:password@localhost:3306/dbname",
+		},
+		{
 			raw:           "unsupported://user:password@localhost:3306/dbname",
 			expectedError: "unsupported DSN driver: unsupported",
 		},
 		{
 			raw:           "invalidurl",
-			expectedError: "invalid DSN format: invalidurl",
+			expectedError: "invalid DSN schema: invalidurl",
 		},
 		{
 			raw:           "ftp://user:password@localhost:3306/dbname",

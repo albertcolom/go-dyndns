@@ -31,10 +31,6 @@ func main() {
 		l.Fatal("APP", "Failed to parse DSN", logger.Field{Key: "error", Value: err})
 	}
 
-	if dsn.Driver != "sqlite3" {
-		l.Fatal("APP", "Unsupported SQL driver", logger.Field{Key: "diver", Value: dsn.Driver})
-	}
-
 	dbClient, err := db.NewSqlClient(dsn)
 	if err != nil {
 		l.Fatal("APP", "Failed to initialize database client", logger.Field{Key: "error", Value: err})

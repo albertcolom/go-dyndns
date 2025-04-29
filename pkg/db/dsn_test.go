@@ -37,6 +37,12 @@ func TestParseDSNSuccess(t *testing.T) {
 			expectedDataSource: "user@localhost:5432/dbname",
 			expectedNormalized: "postgres://user@localhost:5432/dbname",
 		},
+		{
+			raw:                "file://./dome/path/dbname.json",
+			expectedDriver:     "file",
+			expectedDataSource: "./dome/path/dbname.json",
+			expectedNormalized: "file://./dome/path/dbname.json",
+		},
 	}
 
 	for _, tt := range tests {

@@ -13,6 +13,7 @@ var schemeAliases = map[string]string{
 	"postgres":   "postgres",
 	"postgresql": "postgres",
 	"mysql":      "mysql",
+	"file":       "file",
 }
 
 type DSN struct {

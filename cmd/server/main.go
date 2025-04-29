@@ -31,17 +31,29 @@ func main() {
 		l.Fatal("APP", "Failed to parse DSN", logger.Field{Key: "error", Value: err})
 	}
 
-	dbClient, err := db.NewSqlClient(dsn)
-	if err != nil {
-		l.Fatal("APP", "Failed to initialize database client", logger.Field{Key: "error", Value: err})
-	}
-	defer func() {
-		if err := dbClient.Close(); err != nil {
-			l.Error("APP", "Database client close error", logger.Field{Key: "error", Value: err})
-		}
-	}()
+	var repo dns.Repository
 
-	repo := repository.NewSQLiteDNSRepository(dbClient.DB)
+	switch dsn.Driver {
+	case "file":
+		repo = repository.NewFileDNSRepository(dsn.DataSource)
+
+	case "sqlite3", "mysql":
+		dbClient, err := db.NewSqlClient(dsn)
+		if err != nil {
+			l.Fatal("APP", "Failed to initialize database client", logger.Field{Key: "error", Value: err})
+		}
+		defer func() {
+			if err := dbClient.Close(); err != nil {
+				l.Error("APP", "Database client close error", logger.Field{Key: "error", Value: err})
+			}
+		}()
+
+		repo = repository.NewSQLiteDNSRepository(dbClient.DB)
+
+	default:
+		l.Fatal("APP", "Unsupported driver", logger.Field{Key: "driver", Value: dsn.Driver})
+	}
+
 	service := dns.NewService(repo)
 
 	dnsHandler := server.NewDnsHandler(service, l)

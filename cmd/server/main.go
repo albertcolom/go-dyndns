@@ -4,10 +4,11 @@ import (
 	"context"
 	"go-dyndns/config"
 	server "go-dyndns/internal/adapters/dns"
+	"go-dyndns/internal/adapters/file"
 	"go-dyndns/internal/adapters/http"
 	"go-dyndns/internal/adapters/http/handler"
 	"go-dyndns/internal/adapters/logger"
-	"go-dyndns/internal/adapters/repository"
+	"go-dyndns/internal/adapters/sql"
 	"go-dyndns/internal/port"
 	dnsservice "go-dyndns/internal/service"
 	"go-dyndns/pkg/db"
@@ -36,10 +37,10 @@ func main() {
 
 	switch dsn.Driver {
 	case "file":
-		repo = repository.NewFileDNSRepository(dsn.DataSource)
+		repo = file.NewFileDNSRepository(dsn.DataSource)
 
 	case "sqlite3", "mysql":
-		dbClient, err := db.NewSqlClient(dsn)
+		dbClient, err := sql.NewSqlClient(dsn)
 		if err != nil {
 			l.Error(ctx, "Failed to initialize database client", "component", "APP", "error", err)
 			os.Exit(1)
@@ -50,7 +51,7 @@ func main() {
 			}
 		}()
 
-		repo = repository.NewSQLRepository(dbClient.DB)
+		repo = sql.NewSQLRepository(dbClient.DB)
 
 	default:
 		l.Error(ctx, "Unsupported driver", "component", "APP", "driver", dsn.Driver)

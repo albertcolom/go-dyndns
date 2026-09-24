@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"go-dyndns/internal/core"
+	"go-dyndns/internal/port"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -15,7 +15,7 @@ func TestLivezHandler(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := core.NewMockDNSService(ctrl)
+	mockService := port.NewMockDNSService(ctrl)
 	handler := NewHandler(mockService)
 
 	req := httptest.NewRequest(http.MethodGet, "/livez", nil)

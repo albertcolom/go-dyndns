@@ -4,17 +4,16 @@ import (
 	"context"
 	"fmt"
 	server "github.com/miekg/dns"
-	"go-dyndns/internal/core"
 	"go-dyndns/internal/port"
 	"strings"
 )
 
 type Handler struct {
-	service core.DNSService
+	service port.DNSService
 	log     port.Logger
 }
 
-func NewDnsHandler(service core.DNSService, log port.Logger) *Handler {
+func NewDnsHandler(service port.DNSService, log port.Logger) *Handler {
 	return &Handler{service: service, log: log}
 }
 

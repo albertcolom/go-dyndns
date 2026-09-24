@@ -1,11 +1,11 @@
 package handler
 
-import "go-dyndns/internal/core"
+import "go-dyndns/internal/port"
 
 type Handler struct {
-	service core.DNSService
+	service port.DNSService
 }
 
-func NewHandler(service core.DNSService) *Handler {
+func NewHandler(service port.DNSService) *Handler {
 	return &Handler{service: service}
 }

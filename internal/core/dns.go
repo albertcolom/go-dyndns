@@ -1,32 +1,53 @@
-//go:generate go run go.uber.org/mock/mockgen -source=$GOFILE -destination=mock_$GOFILE -package=$GOPACKAGE
-
 package core
 
 import (
 	"context"
-	"fmt"
 	"net"
+	"regexp"
+
+	"go-dyndns/internal/port"
 )
 
-var (
-	ErrDomainEmpty      = fmt.Errorf("domain cannot be empty")
-	ErrInvalidDomain    = fmt.Errorf("invalid domain")
-	ErrInvalidDomainLen = fmt.Errorf("domain too long (max 255 characters)")
-	ErrEmptyIP          = fmt.Errorf("IP cannot be empty")
-	ErrInvalidIP        = fmt.Errorf("invalid IP address")
-)
-
-type Dns struct {
-	Domain string `json:"domain"`
-	IP     net.IP `json:"ip"`
+type dnsService struct {
+	repository port.DNSRepository
 }
 
-type DNSRepository interface {
-	Save(ctx context.Context, dns *Dns) error
-	Find(ctx context.Context, domain string) (*Dns, error)
+func NewDNSService(repository port.DNSRepository) port.DNSService {
+	return &dnsService{repository: repository}
 }
 
-type DNSService interface {
-	Update(ctx context.Context, domain, ip string) error
-	Find(ctx context.Context, domain string) (*Dns, error)
+func (s *dnsService) Update(ctx context.Context, domain, ip string) error {
+	dns := &port.Dns{Domain: domain, IP: net.ParseIP(ip)}
+	if err := validateDns(dns); err != nil {
+		return err
+	}
+	return s.repository.Save(ctx, dns)
+}
+
+func (s *dnsService) Find(ctx context.Context, domain string) (*port.Dns, error) {
+	return s.repository.Find(ctx, domain)
+}
+
+func validateDns(d *port.Dns) error {
+	if err := validateDomain(d.Domain); err != nil {
+		return err
+	}
+	if d.IP == nil || d.IP.To4() == nil {
+		return port.ErrInvalidIP
+	}
+	return nil
+}
+
+func validateDomain(domain string) error {
+	if domain == "" {
+		return port.ErrDomainEmpty
+	}
+	if len(domain) > 255 {
+		return port.ErrInvalidDomainLen
+	}
+	match, _ := regexp.MatchString(port.DomainPattern, domain)
+	if !match {
+		return port.ErrInvalidDomain
+	}
+	return nil
 }

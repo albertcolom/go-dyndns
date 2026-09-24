@@ -20,22 +20,10 @@ func TestParseDSNSuccess(t *testing.T) {
 			expectedNormalized: "sqlite3://file.db",
 		},
 		{
-			raw:                "postgres://user:password@localhost:5432/dbname",
-			expectedDriver:     "postgres",
-			expectedDataSource: "user:password@localhost:5432/dbname",
-			expectedNormalized: "postgres://user:password@localhost:5432/dbname",
-		},
-		{
 			raw:                "mysql://user:password@tcp(localhost:3306)/dbname",
 			expectedDriver:     "mysql",
 			expectedDataSource: "user:password@tcp(localhost:3306)/dbname",
 			expectedNormalized: "mysql://user:password@tcp(localhost:3306)/dbname",
-		},
-		{
-			raw:                "postgresql://user@localhost:5432/dbname",
-			expectedDriver:     "postgres",
-			expectedDataSource: "user@localhost:5432/dbname",
-			expectedNormalized: "postgres://user@localhost:5432/dbname",
 		},
 		{
 			raw:                "file://./dome/path/dbname.json",
@@ -68,6 +56,10 @@ func TestParseDSNError(t *testing.T) {
 		{
 			raw:           "unsupported://user:password@localhost:3306/dbname",
 			expectedError: "unsupported DSN driver: unsupported",
+		},
+		{
+			raw:           "postgres://user:password@localhost:5432/dbname",
+			expectedError: "unsupported DSN driver: postgres",
 		},
 		{
 			raw:           "invalidurl",

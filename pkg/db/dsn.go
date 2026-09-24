@@ -8,12 +8,10 @@ import (
 )
 
 var schemeAliases = map[string]string{
-	"sqlite":     "sqlite3",
-	"sqlite3":    "sqlite3",
-	"postgres":   "postgres",
-	"postgresql": "postgres",
-	"mysql":      "mysql",
-	"file":       "file",
+	"sqlite":  "sqlite3",
+	"sqlite3": "sqlite3",
+	"mysql":   "mysql",
+	"file":    "file",
 }
 
 type DSN struct {

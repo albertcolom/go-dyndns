@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"go-dyndns/internal/port"
 	"os"
+	"path/filepath"
 	"sync"
 )
 
@@ -85,5 +86,28 @@ func (r *FileDNSRepository) saveRecords(records []*port.Dns) error {
 		return err
 	}
 
-	return os.WriteFile(r.filePath, content, 0644)
+	dir := filepath.Dir(r.filePath)
+	tmp, err := os.CreateTemp(dir, filepath.Base(r.filePath)+".tmp-*")
+	if err != nil {
+		return fmt.Errorf("failed to create temp file: %w", err)
+	}
+	tmpPath := tmp.Name()
+	defer os.Remove(tmpPath)
+
+	if _, err := tmp.Write(content); err != nil {
+		tmp.Close()
+		return fmt.Errorf("failed to write temp file: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		return fmt.Errorf("failed to close temp file: %w", err)
+	}
+	if err := os.Chmod(tmpPath, 0644); err != nil {
+		return fmt.Errorf("failed to set permissions on temp file: %w", err)
+	}
+
+	if err := os.Rename(tmpPath, r.filePath); err != nil {
+		return fmt.Errorf("failed to replace JSON file: %w", err)
+	}
+
+	return nil
 }

@@ -18,13 +18,13 @@ func NewSQLiteDNSRepository(db *sql.DB) *SQLiteDNSRepository {
 	return &SQLiteDNSRepository{db: db}
 }
 
-func (r *SQLiteDNSRepository) Save(ctx context.Context, dns *dns.Dns) error {
+func (r *SQLiteDNSRepository) Save(ctx context.Context, dns *core.Dns) error {
 	query := `REPLACE INTO dns_records (domain, ip) VALUES (?, ?)`
 	_, err := r.db.ExecContext(ctx, query, dns.Domain, dns.IP.String())
 	return err
 }
 
-func (r *SQLiteDNSRepository) Find(ctx context.Context, domain string) (*dns.Dns, error) {
+func (r *SQLiteDNSRepository) Find(ctx context.Context, domain string) (*core.Dns, error) {
 	var ip string
 	query := `SELECT ip FROM dns_records WHERE domain = ?`
 	err := r.db.QueryRowContext(ctx, query, domain).Scan(&ip)
@@ -40,5 +40,5 @@ func (r *SQLiteDNSRepository) Find(ctx context.Context, domain string) (*dns.Dns
 		return nil, fmt.Errorf("invalid IP in database")
 	}
 
-	return &dns.Dns{Domain: domain, IP: parsedIP}, nil
+	return &core.Dns{Domain: domain, IP: parsedIP}, nil
 }

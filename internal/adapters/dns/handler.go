@@ -10,11 +10,11 @@ import (
 )
 
 type Handler struct {
-	service dns.Service
+	service core.DNSService
 	log     port.Logger
 }
 
-func NewDnsHandler(service dns.Service, log port.Logger) *Handler {
+func NewDnsHandler(service core.DNSService, log port.Logger) *Handler {
 	return &Handler{service: service, log: log}
 }
 

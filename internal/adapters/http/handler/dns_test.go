@@ -19,7 +19,7 @@ func TestUpdateHandler(t *testing.T) {
 	ctx := context.Background()
 	defer ctrl.Finish()
 
-	mockService := dns.NewMockService(ctrl)
+	mockService := core.NewMockDNSService(ctrl)
 	handler := NewHandler(mockService)
 
 	domain := "example.com"
@@ -71,10 +71,10 @@ func TestGetIpHandler(t *testing.T) {
 	ctx := context.Background()
 	defer ctrl.Finish()
 
-	mockService := dns.NewMockService(ctrl)
+	mockService := core.NewMockDNSService(ctrl)
 	handler := NewHandler(mockService)
 
-	record := dns.Dns{Domain: "example.com", IP: net.ParseIP("192.168.1.1")}
+	record := core.Dns{Domain: "example.com", IP: net.ParseIP("192.168.1.1")}
 
 	t.Run("Retrieve found DNS by domain", func(t *testing.T) {
 		mockService.EXPECT().Find(ctx, record.Domain).Return(&record, nil)

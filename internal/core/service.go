@@ -1,22 +1,18 @@
-//go:generate go run go.uber.org/mock/mockgen -source=$GOFILE -destination=mock_$GOFILE -package=$GOPACKAGE
-
-package dns
+package core
 
 import (
 	"context"
 	"net"
+	"regexp"
 )
 
-type Service interface {
-	Update(ctx context.Context, domain, ip string) error
-	Find(ctx context.Context, domain string) (*Dns, error)
-}
+const domainPattern = `^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$`
 
 type service struct {
-	repository Repository
+	repository DNSRepository
 }
 
-func NewService(repository Repository) Service {
+func NewService(repository DNSRepository) DNSService {
 	return &service{repository: repository}
 }
 
@@ -30,4 +26,28 @@ func (s *service) Update(ctx context.Context, domain, ip string) error {
 
 func (s *service) Find(ctx context.Context, domain string) (*Dns, error) {
 	return s.repository.Find(ctx, domain)
+}
+
+func (d *Dns) Validate() error {
+	if err := d.validateDomain(); err != nil {
+		return err
+	}
+	if d.IP == nil || d.IP.To4() == nil {
+		return ErrInvalidIP
+	}
+	return nil
+}
+
+func (d *Dns) validateDomain() error {
+	if d.Domain == "" {
+		return ErrDomainEmpty
+	}
+	if len(d.Domain) > 255 {
+		return ErrInvalidDomainLen
+	}
+	match, _ := regexp.MatchString(domainPattern, d.Domain)
+	if !match {
+		return ErrInvalidDomain
+	}
+	return nil
 }

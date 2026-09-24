@@ -1,4 +1,4 @@
-package dns
+package core
 
 import (
 	"context"
@@ -13,7 +13,7 @@ func TestUpdateDns(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockRepository := NewMockRepository(ctrl)
+	mockRepository := NewMockDNSRepository(ctrl)
 	service := NewService(mockRepository)
 	ctx := context.Background()
 
@@ -52,7 +52,7 @@ func TestFindDns(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockRepository := NewMockRepository(ctrl)
+	mockRepository := NewMockDNSRepository(ctrl)
 	service := NewService(mockRepository)
 	ctx := context.Background()
 

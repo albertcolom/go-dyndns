@@ -18,7 +18,7 @@ func NewFileDNSRepository(filePath string) *FileDNSRepository {
 	return &FileDNSRepository{filePath: filePath}
 }
 
-func (r *FileDNSRepository) Save(ctx context.Context, dns *dns.Dns) error {
+func (r *FileDNSRepository) Save(ctx context.Context, dns *core.Dns) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -43,7 +43,7 @@ func (r *FileDNSRepository) Save(ctx context.Context, dns *dns.Dns) error {
 	return r.saveRecords(data)
 }
 
-func (r *FileDNSRepository) Find(ctx context.Context, domain string) (*dns.Dns, error) {
+func (r *FileDNSRepository) Find(ctx context.Context, domain string) (*core.Dns, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -61,8 +61,8 @@ func (r *FileDNSRepository) Find(ctx context.Context, domain string) (*dns.Dns, 
 	return nil, nil
 }
 
-func (r *FileDNSRepository) loadRecords() ([]*dns.Dns, error) {
-	var records []*dns.Dns
+func (r *FileDNSRepository) loadRecords() ([]*core.Dns, error) {
+	var records []*core.Dns
 	if _, err := os.Stat(r.filePath); os.IsNotExist(err) {
 		return records, nil
 	}
@@ -79,7 +79,7 @@ func (r *FileDNSRepository) loadRecords() ([]*dns.Dns, error) {
 	return records, nil
 }
 
-func (r *FileDNSRepository) saveRecords(records []*dns.Dns) error {
+func (r *FileDNSRepository) saveRecords(records []*core.Dns) error {
 	content, err := json.MarshalIndent(records, "", "  ")
 	if err != nil {
 		return err

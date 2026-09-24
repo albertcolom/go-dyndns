@@ -31,7 +31,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	var repo dns.Repository
+	var repo core.DNSRepository
 
 	switch dsn.Driver {
 	case "file":
@@ -56,7 +56,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	service := dns.NewService(repo)
+	service := core.NewService(repo)
 
 	dnsHandler := server.NewDnsHandler(service, l)
 	dnsServer := server.NewDnsServer(dnsHandler, cfg.Dns.Addr, cfg.Dns.Net, l)

@@ -15,7 +15,7 @@ func TestLivezHandler(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := dns.NewMockService(ctrl)
+	mockService := core.NewMockDNSService(ctrl)
 	handler := NewHandler(mockService)
 
 	req := httptest.NewRequest(http.MethodGet, "/livez", nil)

@@ -8,8 +8,8 @@ import (
 	"go-dyndns/internal/adapters/http/handler"
 	"go-dyndns/internal/adapters/logger"
 	"go-dyndns/internal/adapters/repository"
-	"go-dyndns/internal/core"
 	"go-dyndns/internal/port"
+	dnsservice "go-dyndns/internal/service"
 	"go-dyndns/pkg/db"
 	"log"
 	"os"
@@ -57,7 +57,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	service := core.NewDNSService(repo)
+	service := dnsservice.NewDNSService(repo)
 
 	dnsHandler := server.NewDnsHandler(service, l)
 	dnsServer := server.NewDnsServer(dnsHandler, cfg.Dns.Addr, cfg.Dns.Net, l)

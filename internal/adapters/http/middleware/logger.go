@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"go-dyndns/internal/port"
+	"go-dyndns/internal/ports"
 )
 
 type statusRecorder struct {
@@ -21,7 +21,7 @@ func (r *statusRecorder) WriteHeader(status int) {
 
 // LoggerMiddleware must be registered after RequestIdMiddleware so the
 // request ID it reads from context has already been set.
-func LoggerMiddleware(log port.Logger) func(http.Handler) http.Handler {
+func LoggerMiddleware(log ports.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()

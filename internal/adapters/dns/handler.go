@@ -3,17 +3,18 @@ package dns
 import (
 	"context"
 	"fmt"
-	server "github.com/miekg/dns"
-	"go-dyndns/internal/port"
+	"go-dyndns/internal/ports"
 	"strings"
+
+	server "github.com/miekg/dns"
 )
 
 type Handler struct {
-	service port.DNSService
-	log     port.Logger
+	service ports.DNSService
+	log     ports.Logger
 }
 
-func NewDnsHandler(service port.DNSService, log port.Logger) *Handler {
+func NewDnsHandler(service ports.DNSService, log ports.Logger) *Handler {
 	return &Handler{service: service, log: log}
 }
 

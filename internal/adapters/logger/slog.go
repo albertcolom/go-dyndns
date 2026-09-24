@@ -5,14 +5,14 @@ import (
 	"log/slog"
 	"os"
 
-	"go-dyndns/internal/port"
+	"go-dyndns/internal/ports"
 )
 
 type SlogLogger struct {
 	slog *slog.Logger
 }
 
-var _ port.Logger = (*SlogLogger)(nil)
+var _ ports.Logger = (*SlogLogger)(nil)
 
 func NewSlogLogger(level string) *SlogLogger {
 	var lvl slog.Level
@@ -40,6 +40,6 @@ func (l *SlogLogger) Error(ctx context.Context, msg string, keysAndValues ...any
 	l.slog.ErrorContext(ctx, msg, keysAndValues...)
 }
 
-func (l *SlogLogger) With(keysAndValues ...any) port.Logger {
+func (l *SlogLogger) With(keysAndValues ...any) ports.Logger {
 	return &SlogLogger{slog: l.slog.With(keysAndValues...)}
 }

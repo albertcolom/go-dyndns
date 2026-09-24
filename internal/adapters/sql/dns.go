@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net"
 
-	"go-dyndns/internal/port"
+	"go-dyndns/internal/ports"
 )
 
 type SQLRepository struct {
@@ -18,13 +18,13 @@ func NewSQLRepository(db *sql.DB) *SQLRepository {
 	return &SQLRepository{db: db}
 }
 
-func (r *SQLRepository) Save(ctx context.Context, dns *port.Dns) error {
+func (r *SQLRepository) Save(ctx context.Context, dns *ports.Dns) error {
 	query := `REPLACE INTO dns_records (domain, ip) VALUES (?, ?)`
 	_, err := r.db.ExecContext(ctx, query, dns.Domain, dns.IP.String())
 	return err
 }
 
-func (r *SQLRepository) Find(ctx context.Context, domain string) (*port.Dns, error) {
+func (r *SQLRepository) Find(ctx context.Context, domain string) (*ports.Dns, error) {
 	var ip string
 	query := `SELECT ip FROM dns_records WHERE domain = ?`
 	err := r.db.QueryRowContext(ctx, query, domain).Scan(&ip)
@@ -40,5 +40,5 @@ func (r *SQLRepository) Find(ctx context.Context, domain string) (*port.Dns, err
 		return nil, fmt.Errorf("invalid IP in database")
 	}
 
-	return &port.Dns{Domain: domain, IP: parsedIP}, nil
+	return &ports.Dns{Domain: domain, IP: parsedIP}, nil
 }

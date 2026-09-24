@@ -5,7 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"go-dyndns/internal/port/mocks"
+	"go-dyndns/internal/ports/mocks"
+
 	"go.uber.org/mock/gomock"
 )
 

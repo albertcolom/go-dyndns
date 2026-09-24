@@ -5,49 +5,49 @@ import (
 	"net"
 	"regexp"
 
-	"go-dyndns/internal/port"
+	"go-dyndns/internal/ports"
 )
 
 type dnsService struct {
-	repository port.DNSRepository
+	repository ports.DNSRepository
 }
 
-func NewDNSService(repository port.DNSRepository) port.DNSService {
+func NewDNSService(repository ports.DNSRepository) ports.DNSService {
 	return &dnsService{repository: repository}
 }
 
 func (s *dnsService) Update(ctx context.Context, domain, ip string) error {
-	dns := &port.Dns{Domain: domain, IP: net.ParseIP(ip)}
+	dns := &ports.Dns{Domain: domain, IP: net.ParseIP(ip)}
 	if err := validateDns(dns); err != nil {
 		return err
 	}
 	return s.repository.Save(ctx, dns)
 }
 
-func (s *dnsService) Find(ctx context.Context, domain string) (*port.Dns, error) {
+func (s *dnsService) Find(ctx context.Context, domain string) (*ports.Dns, error) {
 	return s.repository.Find(ctx, domain)
 }
 
-func validateDns(d *port.Dns) error {
+func validateDns(d *ports.Dns) error {
 	if err := validateDomain(d.Domain); err != nil {
 		return err
 	}
 	if d.IP == nil || d.IP.To4() == nil {
-		return port.ErrInvalidIP
+		return ports.ErrInvalidIP
 	}
 	return nil
 }
 
 func validateDomain(domain string) error {
 	if domain == "" {
-		return port.ErrDomainEmpty
+		return ports.ErrDomainEmpty
 	}
 	if len(domain) > 255 {
-		return port.ErrInvalidDomainLen
+		return ports.ErrInvalidDomainLen
 	}
-	match, _ := regexp.MatchString(port.DomainPattern, domain)
+	match, _ := regexp.MatchString(ports.DomainPattern, domain)
 	if !match {
-		return port.ErrInvalidDomain
+		return ports.ErrInvalidDomain
 	}
 	return nil
 }

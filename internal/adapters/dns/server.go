@@ -2,16 +2,17 @@ package dns
 
 import (
 	"context"
-	server "github.com/miekg/dns"
 	"go-dyndns/internal/adapters/dns/middleware"
-	"go-dyndns/internal/port"
+	"go-dyndns/internal/ports"
+
+	server "github.com/miekg/dns"
 )
 
 type Server struct {
 	DnsServer *server.Server
 }
 
-func NewDnsServer(handler *Handler, addr, net string, log port.Logger) *Server {
+func NewDnsServer(handler *Handler, addr, net string, log ports.Logger) *Server {
 	dnsServer := &server.Server{
 		Addr: addr,
 		Net:  net,

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go-dyndns/internal/port"
+	"go-dyndns/internal/ports"
 	"os"
 	"path/filepath"
 	"sync"
@@ -19,7 +19,7 @@ func NewFileDNSRepository(filePath string) *FileDNSRepository {
 	return &FileDNSRepository{filePath: filePath}
 }
 
-func (r *FileDNSRepository) Save(ctx context.Context, dns *port.Dns) error {
+func (r *FileDNSRepository) Save(ctx context.Context, dns *ports.Dns) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -44,7 +44,7 @@ func (r *FileDNSRepository) Save(ctx context.Context, dns *port.Dns) error {
 	return r.saveRecords(data)
 }
 
-func (r *FileDNSRepository) Find(ctx context.Context, domain string) (*port.Dns, error) {
+func (r *FileDNSRepository) Find(ctx context.Context, domain string) (*ports.Dns, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -62,8 +62,8 @@ func (r *FileDNSRepository) Find(ctx context.Context, domain string) (*port.Dns,
 	return nil, nil
 }
 
-func (r *FileDNSRepository) loadRecords() ([]*port.Dns, error) {
-	var records []*port.Dns
+func (r *FileDNSRepository) loadRecords() ([]*ports.Dns, error) {
+	var records []*ports.Dns
 	if _, err := os.Stat(r.filePath); os.IsNotExist(err) {
 		return records, nil
 	}
@@ -80,7 +80,7 @@ func (r *FileDNSRepository) loadRecords() ([]*port.Dns, error) {
 	return records, nil
 }
 
-func (r *FileDNSRepository) saveRecords(records []*port.Dns) error {
+func (r *FileDNSRepository) saveRecords(records []*ports.Dns) error {
 	content, err := json.MarshalIndent(records, "", "  ")
 	if err != nil {
 		return err

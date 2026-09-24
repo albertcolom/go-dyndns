@@ -1,11 +1,12 @@
 package middleware
 
 import (
-	"github.com/miekg/dns"
-	"go-dyndns/internal/port/mocks"
-	"go.uber.org/mock/gomock"
+	"go-dyndns/internal/ports/mocks"
 	"net"
 	"testing"
+
+	"github.com/miekg/dns"
+	"go.uber.org/mock/gomock"
 )
 
 type mockResponseWriter struct {

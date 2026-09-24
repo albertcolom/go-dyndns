@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"go-dyndns/internal/adapters/http"
-	"go-dyndns/internal/port"
+	"go-dyndns/internal/ports"
 )
 
-func StartHTTPServer(ctx context.Context, s *http.Server, log port.Logger) chan error {
+func StartHTTPServer(ctx context.Context, s *http.Server, log ports.Logger) chan error {
 	errChan := make(chan error, 1)
 
 	go func() {

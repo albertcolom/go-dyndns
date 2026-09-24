@@ -2,10 +2,11 @@ package middleware
 
 import (
 	"context"
-	"github.com/miekg/dns"
-	"go-dyndns/internal/port"
+	"go-dyndns/internal/ports"
 	"net"
 	"time"
+
+	"github.com/miekg/dns"
 )
 
 type rcodeRecorder struct {
@@ -18,7 +19,7 @@ func (r *rcodeRecorder) WriteMsg(msg *dns.Msg) error {
 	return r.ResponseWriter.WriteMsg(msg)
 }
 
-func LoggingMiddleware(log port.Logger, next dns.HandlerFunc) dns.HandlerFunc {
+func LoggingMiddleware(log ports.Logger, next dns.HandlerFunc) dns.HandlerFunc {
 	return func(w dns.ResponseWriter, r *dns.Msg) {
 		start := time.Now()
 

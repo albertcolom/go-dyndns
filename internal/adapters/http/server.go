@@ -10,14 +10,14 @@ import (
 
 	"go-dyndns/internal/adapters/http/handler"
 	"go-dyndns/internal/adapters/http/middleware"
-	"go-dyndns/internal/port"
+	"go-dyndns/internal/ports"
 )
 
 type Server struct {
 	HttpServer *http.Server
 }
 
-func NewHTTPServer(h *handler.Handler, addr, token string, log port.Logger) *Server {
+func NewHTTPServer(h *handler.Handler, addr, token string, log ports.Logger) *Server {
 	router := chi.NewRouter()
 	router.Use(middleware.RequestIdMiddleware())
 	router.Use(middleware.LoggerMiddleware(log))

@@ -4,7 +4,7 @@ import (
 	"context"
 	"go-dyndns/internal/adapters/dns"
 	"go-dyndns/internal/adapters/http"
-	"go-dyndns/internal/port"
+	"go-dyndns/internal/ports"
 	"os"
 	"os/signal"
 	"sync"
@@ -18,7 +18,7 @@ func WaitForShutdown(
 	dnsServer *dns.Server,
 	httpServer *http.Server,
 	httpErrChan, dnsErrChan chan error,
-	log port.Logger,
+	log ports.Logger,
 ) {
 	interruptChan := make(chan os.Signal, 1)
 	signal.Notify(interruptChan, os.Interrupt, syscall.SIGTERM)

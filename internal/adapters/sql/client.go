@@ -6,7 +6,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/mattn/go-sqlite3"
 
-	"go-dyndns/internal/port"
+	"go-dyndns/internal/ports"
 )
 
 type Client struct {
@@ -14,7 +14,7 @@ type Client struct {
 	Driver string
 }
 
-func NewSqlClient(dsn *port.DSN) (*Client, error) {
+func NewSqlClient(dsn *ports.DSN) (*Client, error) {
 	db, err := sql.Open(dsn.Driver, dsn.DataSource)
 	if err != nil {
 		return nil, err

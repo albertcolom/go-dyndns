@@ -5,8 +5,8 @@ import (
 	"net"
 	"testing"
 
-	"go-dyndns/internal/port"
-	"go-dyndns/internal/port/mocks"
+	"go-dyndns/internal/ports"
+	"go-dyndns/internal/ports/mocks"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -24,7 +24,7 @@ func TestUpdateDns(t *testing.T) {
 		domain := "example.com"
 		ip := net.ParseIP("192.168.1.1")
 
-		mockRepository.EXPECT().Save(ctx, &port.Dns{Domain: domain, IP: ip}).Return(nil)
+		mockRepository.EXPECT().Save(ctx, &ports.Dns{Domain: domain, IP: ip}).Return(nil)
 		err := service.Update(ctx, domain, ip.String())
 
 		assert.NoError(t, err)
@@ -37,7 +37,7 @@ func TestUpdateDns(t *testing.T) {
 		err := service.Update(ctx, domain, ip)
 
 		assert.Error(t, err)
-		assert.Equal(t, port.ErrInvalidIP, err)
+		assert.Equal(t, ports.ErrInvalidIP, err)
 	})
 
 	t.Run("Update failed for invalid domain", func(t *testing.T) {
@@ -47,7 +47,7 @@ func TestUpdateDns(t *testing.T) {
 		err := service.Update(ctx, domain, ip)
 
 		assert.Error(t, err)
-		assert.Equal(t, port.ErrInvalidDomain, err)
+		assert.Equal(t, ports.ErrInvalidDomain, err)
 	})
 }
 
@@ -61,7 +61,7 @@ func TestFindDns(t *testing.T) {
 
 	t.Run("Retrieve found DNS", func(t *testing.T) {
 		domain := "example.com"
-		expected := &port.Dns{Domain: domain, IP: net.ParseIP("192.168.1.1")}
+		expected := &ports.Dns{Domain: domain, IP: net.ParseIP("192.168.1.1")}
 
 		mockRepository.EXPECT().Find(ctx, domain).Return(expected, nil)
 		result, err := service.Find(ctx, domain)
@@ -105,27 +105,27 @@ func TestValidateDomain(t *testing.T) {
 		{
 			name:     "invalid domain (no TLD)",
 			domain:   "example",
-			expected: port.ErrInvalidDomain,
+			expected: ports.ErrInvalidDomain,
 		},
 		{
 			name:     "invalid domain (trailing dot)",
 			domain:   "example.",
-			expected: port.ErrInvalidDomain,
+			expected: ports.ErrInvalidDomain,
 		},
 		{
 			name:     "invalid domain (invalid characters)",
 			domain:   "example!.com",
-			expected: port.ErrInvalidDomain,
+			expected: ports.ErrInvalidDomain,
 		},
 		{
 			name:     "invalid domain (single-character TLD)",
 			domain:   "example.c",
-			expected: port.ErrInvalidDomain,
+			expected: ports.ErrInvalidDomain,
 		},
 		{
 			name:     "invalid domain (empty string)",
 			domain:   "",
-			expected: port.ErrDomainEmpty,
+			expected: ports.ErrDomainEmpty,
 		},
 	}
 

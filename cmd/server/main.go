@@ -9,7 +9,7 @@ import (
 	"go-dyndns/internal/adapters/http/handler"
 	"go-dyndns/internal/adapters/logger"
 	"go-dyndns/internal/adapters/sql"
-	"go-dyndns/internal/port"
+	"go-dyndns/internal/ports"
 	dnsservice "go-dyndns/internal/service"
 	"log"
 	"os"
@@ -33,7 +33,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	var repo port.DNSRepository
+	var repo ports.DNSRepository
 
 	switch dsn.Driver {
 	case "file":

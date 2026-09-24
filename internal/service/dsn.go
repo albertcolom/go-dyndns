@@ -6,16 +6,16 @@ import (
 	"regexp"
 	"strings"
 
-	"go-dyndns/internal/port"
+	"go-dyndns/internal/ports"
 )
 
 type dsnService struct{}
 
-func NewDSNService() port.DSNService {
+func NewDSNService() ports.DSNService {
 	return &dsnService{}
 }
 
-func (s *dsnService) ParseDSN(raw string) (*port.DSN, error) {
+func (s *dsnService) ParseDSN(raw string) (*ports.DSN, error) {
 	parse := strings.Index(raw, "://")
 	if parse == -1 {
 		return nil, fmt.Errorf("invalid DSN schema: %s", raw)
@@ -24,7 +24,7 @@ func (s *dsnService) ParseDSN(raw string) (*port.DSN, error) {
 	driver := raw[:parse]
 	dataSource := raw[parse+3:]
 
-	normalizedDriver, ok := port.SchemeAliases[strings.ToLower(driver)]
+	normalizedDriver, ok := ports.SchemeAliases[strings.ToLower(driver)]
 	if !ok {
 		return nil, fmt.Errorf("unsupported DSN driver: %s", driver)
 	}
@@ -36,7 +36,7 @@ func (s *dsnService) ParseDSN(raw string) (*port.DSN, error) {
 		return nil, fmt.Errorf("invalid DSN format: %s", raw)
 	}
 
-	return &port.DSN{
+	return &ports.DSN{
 		Driver:     normalizedDriver,
 		DataSource: dataSource,
 		Raw:        raw,

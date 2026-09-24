@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"embed"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -54,8 +53,7 @@ func LoadConfig() (*Config, error) {
 
 	var config Config
 	if err := viper.Unmarshal(&config); err != nil {
-		log.Fatalf("Error unmarshalling config: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
 	return &config, nil

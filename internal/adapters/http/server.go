@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -18,8 +19,6 @@ type Server struct {
 
 func NewHTTPServer(h *handler.Handler, addr, token string, log port.Logger) *Server {
 	router := chi.NewRouter()
-	// RequestId must run before Logger so the request ID it sets is
-	// visible on the request Logger receives.
 	router.Use(middleware.RequestIdMiddleware())
 	router.Use(middleware.LoggerMiddleware(log))
 	router.Use(chimiddleware.Recoverer)
@@ -37,7 +36,10 @@ func NewHTTPServer(h *handler.Handler, addr, token string, log port.Logger) *Ser
 }
 
 func (s *Server) Start() error {
-	return s.HttpServer.ListenAndServe()
+	if err := s.HttpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+	return nil
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {

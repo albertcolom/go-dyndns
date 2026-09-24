@@ -10,21 +10,21 @@ import (
 	"go-dyndns/internal/port"
 )
 
-type SQLiteDNSRepository struct {
+type SQLRepository struct {
 	db *sql.DB
 }
 
-func NewSQLiteDNSRepository(db *sql.DB) *SQLiteDNSRepository {
-	return &SQLiteDNSRepository{db: db}
+func NewSQLRepository(db *sql.DB) *SQLRepository {
+	return &SQLRepository{db: db}
 }
 
-func (r *SQLiteDNSRepository) Save(ctx context.Context, dns *port.Dns) error {
+func (r *SQLRepository) Save(ctx context.Context, dns *port.Dns) error {
 	query := `REPLACE INTO dns_records (domain, ip) VALUES (?, ?)`
 	_, err := r.db.ExecContext(ctx, query, dns.Domain, dns.IP.String())
 	return err
 }
 
-func (r *SQLiteDNSRepository) Find(ctx context.Context, domain string) (*port.Dns, error) {
+func (r *SQLRepository) Find(ctx context.Context, domain string) (*port.Dns, error) {
 	var ip string
 	query := `SELECT ip FROM dns_records WHERE domain = ?`
 	err := r.db.QueryRowContext(ctx, query, domain).Scan(&ip)

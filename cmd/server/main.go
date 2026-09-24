@@ -50,7 +50,7 @@ func main() {
 			}
 		}()
 
-		repo = repository.NewSQLiteDNSRepository(dbClient.DB)
+		repo = repository.NewSQLRepository(dbClient.DB)
 
 	default:
 		l.Error(ctx, "Unsupported driver", "component", "APP", "driver", dsn.Driver)

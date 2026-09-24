@@ -5,16 +5,16 @@ import (
 	"fmt"
 	server "github.com/miekg/dns"
 	"go-dyndns/internal/core/dns"
-	"go-dyndns/pkg/logger"
+	"go-dyndns/internal/port"
 	"strings"
 )
 
 type Handler struct {
 	service dns.Service
-	log     logger.Logger
+	log     port.Logger
 }
 
-func NewDnsHandler(service dns.Service, log logger.Logger) *Handler {
+func NewDnsHandler(service dns.Service, log port.Logger) *Handler {
 	return &Handler{service: service, log: log}
 }
 
@@ -28,11 +28,10 @@ func (h *Handler) HandleDNSRequest(w server.ResponseWriter, r *server.Msg) {
 			domainName := strings.TrimSuffix(question.Name, ".")
 			record, err := h.service.Find(ctx, domainName)
 			if err != nil {
-				h.log.Error(
-					"DNS",
-					"Error finding record",
-					logger.Field{Key: "domain", Value: domainName},
-					logger.Field{Key: "error", Value: err},
+				h.log.Error(ctx, "Error finding record",
+					"component", "DNS",
+					"domain", domainName,
+					"error", err,
 				)
 				continue
 			}
@@ -47,6 +46,6 @@ func (h *Handler) HandleDNSRequest(w server.ResponseWriter, r *server.Msg) {
 	}
 
 	if err := w.WriteMsg(msg); err != nil {
-		h.log.Error("DNS", "Failed to write DNS response", logger.Field{Key: "error", Value: err})
+		h.log.Error(ctx, "Failed to write DNS response", "component", "DNS", "error", err)
 	}
 }

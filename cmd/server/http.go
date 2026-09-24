@@ -1,16 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"go-dyndns/internal/adapters/http"
-	"go-dyndns/pkg/logger"
+	"go-dyndns/internal/port"
 )
 
-func StartHTTPServer(s *http.Server, log logger.Logger) chan error {
+func StartHTTPServer(ctx context.Context, s *http.Server, log port.Logger) chan error {
 	errChan := make(chan error, 1)
 
 	go func() {
-		log.Info("HTTP", "Starting server", logger.Field{Key: "addr", Value: s.HttpServer.Addr})
+		log.Info(ctx, "Starting server", "component", "HTTP", "addr", s.HttpServer.Addr)
 		if err := s.Start(); err != nil {
 			errChan <- fmt.Errorf("HTTP server error: %w", err)
 		}

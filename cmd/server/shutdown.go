@@ -4,7 +4,7 @@ import (
 	"context"
 	"go-dyndns/internal/adapters/dns"
 	"go-dyndns/internal/adapters/http"
-	"go-dyndns/pkg/logger"
+	"go-dyndns/internal/port"
 	"os"
 	"os/signal"
 	"sync"
@@ -13,25 +13,26 @@ import (
 )
 
 func WaitForShutdown(
+	ctx context.Context,
 	cancel context.CancelFunc,
 	dnsServer *dns.Server,
 	httpServer *http.Server,
 	httpErrChan, dnsErrChan chan error,
-	log logger.Logger,
+	log port.Logger,
 ) {
 	interruptChan := make(chan os.Signal, 1)
 	signal.Notify(interruptChan, os.Interrupt, syscall.SIGTERM)
 
 	select {
 	case <-interruptChan:
-		log.Info("SYSTEM", "Received shutdown signal")
+		log.Info(ctx, "Received shutdown signal", "component", "SYSTEM")
 	case err := <-httpErrChan:
-		log.Error("HTTP", "HTTP Server error", logger.Field{Key: "error", Value: err})
+		log.Error(ctx, "HTTP Server error", "component", "HTTP", "error", err)
 	case err := <-dnsErrChan:
-		log.Error("DNS", "DNS Server error", logger.Field{Key: "error", Value: err})
+		log.Error(ctx, "DNS Server error", "component", "DNS", "error", err)
 	}
 
-	log.Info("APP", "Initiating graceful shutdown")
+	log.Info(ctx, "Initiating graceful shutdown", "component", "APP")
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCancel()
@@ -42,18 +43,18 @@ func WaitForShutdown(
 	go func() {
 		defer wg.Done()
 		if err := dnsServer.Shutdown(shutdownCtx); err != nil {
-			log.Error("DNS", "Server shutdown error", logger.Field{Key: "error", Value: err})
+			log.Error(ctx, "Server shutdown error", "component", "DNS", "error", err)
 		} else {
-			log.Info("DNS", "Server stopped gracefully")
+			log.Info(ctx, "Server stopped gracefully", "component", "DNS")
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		if err := httpServer.Shutdown(shutdownCtx); err != nil {
-			log.Error("HTTP", "Server shutdown error", logger.Field{Key: "error", Value: err})
+			log.Error(ctx, "Server shutdown error", "component", "HTTP", "error", err)
 		} else {
-			log.Info("HTTP", "Server stopped gracefully")
+			log.Info(ctx, "Server stopped gracefully", "component", "HTTP")
 		}
 	}()
 

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"go-dyndns/pkg/logger"
+	"go-dyndns/internal/port"
 )
 
 type statusRecorder struct {
@@ -21,7 +21,7 @@ func (r *statusRecorder) WriteHeader(status int) {
 
 // LoggerMiddleware must be registered after RequestIdMiddleware so the
 // request ID it reads from context has already been set.
-func LoggerMiddleware(log logger.Logger) func(http.Handler) http.Handler {
+func LoggerMiddleware(log port.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
@@ -29,15 +29,14 @@ func LoggerMiddleware(log logger.Logger) func(http.Handler) http.Handler {
 			rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
 			next.ServeHTTP(rec, r)
 
-			log.Info(
-				"HTTP",
-				"Request",
-				logger.Field{Key: "method", Value: r.Method},
-				logger.Field{Key: "path", Value: r.URL.Path},
-				logger.Field{Key: "status", Value: rec.status},
-				logger.Field{Key: "client_ip", Value: clientIP(r)},
-				logger.Field{Key: "duration", Value: time.Since(start)},
-				logger.Field{Key: "request_id", Value: RequestIDFromContext(r.Context())},
+			log.Info(r.Context(), "Request",
+				"component", "HTTP",
+				"method", r.Method,
+				"path", r.URL.Path,
+				"status", rec.status,
+				"client_ip", clientIP(r),
+				"duration", time.Since(start),
+				"request_id", RequestIDFromContext(r.Context()),
 			)
 		})
 	}

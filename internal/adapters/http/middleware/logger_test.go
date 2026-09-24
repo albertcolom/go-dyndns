@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"go-dyndns/pkg/logger"
+	"go-dyndns/internal/port"
 	"go.uber.org/mock/gomock"
 )
 
@@ -14,17 +14,18 @@ func TestLoggerMiddleware(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockLogger := logger.NewMockLogger(ctrl)
+		mockLogger := port.NewMockLogger(ctrl)
 
 		mockLogger.EXPECT().Info(
-			"HTTP",
-			"Request",
-			logger.Field{Key: "method", Value: "GET"},
-			logger.Field{Key: "path", Value: "/test"},
-			logger.Field{Key: "status", Value: 200},
-			logger.Field{Key: "client_ip", Value: "1.2.3.4"},
 			gomock.Any(),
-			logger.Field{Key: "request_id", Value: "test-request-id"},
+			"Request",
+			"component", "HTTP",
+			"method", "GET",
+			"path", "/test",
+			"status", 200,
+			"client_ip", "1.2.3.4",
+			"duration", gomock.Any(),
+			"request_id", "test-request-id",
 		)
 
 		handler := RequestIdMiddleware()(LoggerMiddleware(mockLogger)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

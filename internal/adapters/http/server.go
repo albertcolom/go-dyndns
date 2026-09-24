@@ -9,14 +9,14 @@ import (
 
 	"go-dyndns/internal/adapters/http/handler"
 	"go-dyndns/internal/adapters/http/middleware"
-	"go-dyndns/pkg/logger"
+	"go-dyndns/internal/port"
 )
 
 type Server struct {
 	HttpServer *http.Server
 }
 
-func NewHTTPServer(h *handler.Handler, addr, token string, log logger.Logger) *Server {
+func NewHTTPServer(h *handler.Handler, addr, token string, log port.Logger) *Server {
 	router := chi.NewRouter()
 	// RequestId must run before Logger so the request ID it sets is
 	// visible on the request Logger receives.

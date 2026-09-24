@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/miekg/dns"
-	"go-dyndns/internal/port"
+	"go-dyndns/internal/port/mocks"
 	"go.uber.org/mock/gomock"
 	"net"
 	"testing"
@@ -25,7 +25,7 @@ func TestLoggingMiddleware(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockLogger := port.NewMockLogger(ctrl)
+	mockLogger := mocks.NewMockLogger(ctrl)
 
 	msg := new(dns.Msg)
 	msg.SetQuestion("example.com.", dns.TypeA)

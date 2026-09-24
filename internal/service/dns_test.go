@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"go-dyndns/internal/port"
+	"go-dyndns/internal/port/mocks"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -15,7 +16,7 @@ func TestUpdateDns(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockRepository := port.NewMockDNSRepository(ctrl)
+	mockRepository := mocks.NewMockDNSRepository(ctrl)
 	service := NewDNSService(mockRepository)
 	ctx := context.Background()
 
@@ -54,7 +55,7 @@ func TestFindDns(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockRepository := port.NewMockDNSRepository(ctrl)
+	mockRepository := mocks.NewMockDNSRepository(ctrl)
 	service := NewDNSService(mockRepository)
 	ctx := context.Background()
 

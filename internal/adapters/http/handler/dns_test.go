@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go-dyndns/internal/port"
+	"go-dyndns/internal/port/mocks"
 	"go.uber.org/mock/gomock"
 )
 
@@ -19,7 +20,7 @@ func TestUpdateHandler(t *testing.T) {
 	ctx := context.Background()
 	defer ctrl.Finish()
 
-	mockService := port.NewMockDNSService(ctrl)
+	mockService := mocks.NewMockDNSService(ctrl)
 	handler := NewHandler(mockService)
 
 	domain := "example.com"
@@ -71,7 +72,7 @@ func TestGetIpHandler(t *testing.T) {
 	ctx := context.Background()
 	defer ctrl.Finish()
 
-	mockService := port.NewMockDNSService(ctrl)
+	mockService := mocks.NewMockDNSService(ctrl)
 	handler := NewHandler(mockService)
 
 	record := port.Dns{Domain: "example.com", IP: net.ParseIP("192.168.1.1")}

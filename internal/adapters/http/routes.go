@@ -8,8 +8,9 @@ import (
 )
 
 // RegisterRoutes wires the API's endpoints onto router.
-func RegisterRoutes(router chi.Router, h *handler.Handler, token string) {
-	router.Get("/livez", h.Livez)
+func RegisterRoutes(router chi.Router, h *handler.Handler, healthHandler *handler.HealthHandler, token string) {
+	router.Get("/livez", healthHandler.Livez)
+	router.Get("/readyz", healthHandler.Readyz)
 
 	router.Route("/v1", func(r chi.Router) {
 		r.Group(func(r chi.Router) {

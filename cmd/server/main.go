@@ -34,10 +34,17 @@ func main() {
 	}
 
 	var repo ports.DNSRepository
+	var healthChecker ports.HealthChecker
 
 	switch dsn.Driver {
 	case "file":
-		repo = file.NewFileDNSRepository(dsn.DataSource)
+		fileRepo, err := file.NewFileDNSRepository(dsn.DataSource)
+		if err != nil {
+			l.Error(ctx, "Failed to initialize file repository", "component", "APP", "error", err)
+			os.Exit(1)
+		}
+		repo = fileRepo
+		healthChecker = fileRepo
 
 	case "sqlite3", "mysql":
 		dbClient, err := sql.NewSqlClient(dsn)
@@ -52,6 +59,7 @@ func main() {
 		}()
 
 		repo = sql.NewSQLRepository(dbClient.DB)
+		healthChecker = dbClient
 
 	default:
 		l.Error(ctx, "Unsupported driver", "component", "APP", "driver", dsn.Driver)
@@ -65,7 +73,8 @@ func main() {
 	dnsErrChan := StartDNSServer(ctx, dnsServer, l)
 
 	httpHandler := handler.NewHandler(service)
-	httpServer := http.NewHTTPServer(httpHandler, cfg.Http.Addr, cfg.Http.Token, l)
+	healthHandler := handler.NewHealthHandler(healthChecker)
+	httpServer := http.NewHTTPServer(httpHandler, healthHandler, cfg.Http.Addr, cfg.Http.Token, l)
 	httpErrChan := StartHTTPServer(ctx, httpServer, l)
 
 	WaitForShutdown(ctx, cancel, dnsServer, httpServer, httpErrChan, dnsErrChan, l)

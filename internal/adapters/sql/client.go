@@ -1,6 +1,7 @@
 package sql
 
 import (
+	"context"
 	"database/sql"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -29,4 +30,8 @@ func NewSqlClient(dsn *ports.DSN) (*Client, error) {
 
 func (c *Client) Close() error {
 	return c.DB.Close()
+}
+
+func (c *Client) Ping(ctx context.Context) error {
+	return c.DB.PingContext(ctx)
 }

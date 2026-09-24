@@ -15,11 +15,16 @@ type FileDNSRepository struct {
 	mu       sync.Mutex
 }
 
-func NewFileDNSRepository(filePath string) *FileDNSRepository {
-	return &FileDNSRepository{filePath: filePath}
+func NewFileDNSRepository(filePath string) (*FileDNSRepository, error) {
+	dir := filepath.Dir(filePath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create storage directory: %w", err)
+	}
+
+	return &FileDNSRepository{filePath: filePath}, nil
 }
 
-func (r *FileDNSRepository) Save(ctx context.Context, dns *ports.Dns) error {
+func (r *FileDNSRepository) Save(_ context.Context, dns *ports.Dns) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -44,7 +49,7 @@ func (r *FileDNSRepository) Save(ctx context.Context, dns *ports.Dns) error {
 	return r.saveRecords(data)
 }
 
-func (r *FileDNSRepository) Find(ctx context.Context, domain string) (*ports.Dns, error) {
+func (r *FileDNSRepository) Find(_ context.Context, domain string) (*ports.Dns, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -109,5 +114,13 @@ func (r *FileDNSRepository) saveRecords(records []*ports.Dns) error {
 		return fmt.Errorf("failed to replace JSON file: %w", err)
 	}
 
+	return nil
+}
+
+func (r *FileDNSRepository) Ping(ctx context.Context) error {
+	dir := filepath.Dir(r.filePath)
+	if _, err := os.Stat(dir); err != nil {
+		return fmt.Errorf("storage directory unreachable: %w", err)
+	}
 	return nil
 }

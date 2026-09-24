@@ -17,13 +17,13 @@ type Server struct {
 	HttpServer *http.Server
 }
 
-func NewHTTPServer(h *handler.Handler, addr, token string, log ports.Logger) *Server {
+func NewHTTPServer(h *handler.Handler, healthHandler *handler.HealthHandler, addr, token string, log ports.Logger) *Server {
 	router := chi.NewRouter()
 	router.Use(middleware.RequestIdMiddleware())
 	router.Use(middleware.LoggerMiddleware(log))
 	router.Use(chimiddleware.Recoverer)
 
-	RegisterRoutes(router, h, token)
+	RegisterRoutes(router, h, healthHandler, token)
 
 	httpServer := &http.Server{
 		Addr:    addr,

@@ -1,3 +1,5 @@
+//go:generate go tool mockgen -source=$GOFILE -destination=mocks/mock_$GOFILE -package=mocks
+
 package ports
 
 import "context"

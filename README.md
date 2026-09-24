@@ -20,7 +20,7 @@ Example `config/config.yaml`
 ```yaml
 http:
   addr: ":8080"   # HTTP server listen address
-  token: "a38b721f-e8c8-4cdf-95b0-baa13ee5ddd5"  # API token for authentication
+  token: "change-me"  # API token for authentication
 
 dns:
   addr: ":53"     # DNS server listen address
@@ -65,4 +65,3 @@ make migrate-up         # Apply all up migrations
 make migrate-down       # Roll back the last migration
 make migrate-version    # Show current migration version
 ```
-

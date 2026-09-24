@@ -1,27 +1,21 @@
-package db
+package service
 
 import (
 	"fmt"
 	"net/url"
 	"regexp"
 	"strings"
+
+	"go-dyndns/internal/port"
 )
 
-var schemeAliases = map[string]string{
-	"sqlite":  "sqlite3",
-	"sqlite3": "sqlite3",
-	"mysql":   "mysql",
-	"file":    "file",
+type dsnService struct{}
+
+func NewDSNService() port.DSNService {
+	return &dsnService{}
 }
 
-type DSN struct {
-	Driver     string
-	DataSource string
-	Raw        string
-	Normalized string
-}
-
-func ParseDSN(raw string) (*DSN, error) {
+func (s *dsnService) ParseDSN(raw string) (*port.DSN, error) {
 	parse := strings.Index(raw, "://")
 	if parse == -1 {
 		return nil, fmt.Errorf("invalid DSN schema: %s", raw)
@@ -30,7 +24,7 @@ func ParseDSN(raw string) (*DSN, error) {
 	driver := raw[:parse]
 	dataSource := raw[parse+3:]
 
-	normalizedDriver, ok := schemeAliases[strings.ToLower(driver)]
+	normalizedDriver, ok := port.SchemeAliases[strings.ToLower(driver)]
 	if !ok {
 		return nil, fmt.Errorf("unsupported DSN driver: %s", driver)
 	}
@@ -42,7 +36,7 @@ func ParseDSN(raw string) (*DSN, error) {
 		return nil, fmt.Errorf("invalid DSN format: %s", raw)
 	}
 
-	return &DSN{
+	return &port.DSN{
 		Driver:     normalizedDriver,
 		DataSource: dataSource,
 		Raw:        raw,

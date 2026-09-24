@@ -11,7 +11,6 @@ import (
 	"go-dyndns/internal/adapters/sql"
 	"go-dyndns/internal/port"
 	dnsservice "go-dyndns/internal/service"
-	"go-dyndns/pkg/db"
 	"log"
 	"os"
 )
@@ -27,7 +26,8 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	dsn, err := db.ParseDSN(cfg.Db.Dsn)
+	dsnService := dnsservice.NewDSNService()
+	dsn, err := dsnService.ParseDSN(cfg.Db.Dsn)
 	if err != nil {
 		l.Error(ctx, "Failed to parse DSN", "component", "APP", "error", err)
 		os.Exit(1)

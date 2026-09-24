@@ -1,4 +1,4 @@
-package db
+package service
 
 import (
 	"testing"
@@ -33,9 +33,11 @@ func TestParseDSNSuccess(t *testing.T) {
 		},
 	}
 
+	svc := NewDSNService()
+
 	for _, tt := range tests {
 		t.Run("Parsing "+tt.raw, func(t *testing.T) {
-			dsn, err := ParseDSN(tt.raw)
+			dsn, err := svc.ParseDSN(tt.raw)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expectedDriver, dsn.Driver)
 			assert.Equal(t, tt.expectedDataSource, dsn.DataSource)
@@ -71,9 +73,11 @@ func TestParseDSNError(t *testing.T) {
 		},
 	}
 
+	svc := NewDSNService()
+
 	for _, tt := range tests {
 		t.Run("Parsing "+tt.raw, func(t *testing.T) {
-			_, err := ParseDSN(tt.raw)
+			_, err := svc.ParseDSN(tt.raw)
 			assert.Error(t, err)
 			assert.Equal(t, err.Error(), tt.expectedError)
 		})

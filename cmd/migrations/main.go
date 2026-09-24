@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"go-dyndns/config"
-	"go-dyndns/pkg/db"
+	"go-dyndns/internal/service"
 	"log"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -20,7 +20,8 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	dsn, err := db.ParseDSN(cfg.Db.Dsn)
+	dsnService := service.NewDSNService()
+	dsn, err := dsnService.ParseDSN(cfg.Db.Dsn)
 	if err != nil {
 		log.Fatalf("Failed to parse dsn: %v", err)
 	}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go-dyndns/internal/core/dns"
+	"go-dyndns/internal/core"
 	"os"
 	"sync"
 )

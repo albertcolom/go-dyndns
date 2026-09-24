@@ -1,6 +1,6 @@
 package handler
 
-import "go-dyndns/internal/core/dns"
+import "go-dyndns/internal/core"
 
 type Handler struct {
 	service dns.Service

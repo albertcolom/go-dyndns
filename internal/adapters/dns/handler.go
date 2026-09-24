@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	server "github.com/miekg/dns"
-	"go-dyndns/internal/core/dns"
+	"go-dyndns/internal/core"
 	"go-dyndns/internal/port"
 	"strings"
 )

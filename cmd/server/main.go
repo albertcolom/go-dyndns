@@ -8,7 +8,7 @@ import (
 	"go-dyndns/internal/adapters/http/handler"
 	"go-dyndns/internal/adapters/logger"
 	"go-dyndns/internal/adapters/repository"
-	"go-dyndns/internal/core/dns"
+	"go-dyndns/internal/core"
 	"go-dyndns/pkg/db"
 	"log"
 	"os"

@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go-dyndns/internal/core/dns"
+	"go-dyndns/internal/core"
 	"go.uber.org/mock/gomock"
 )
 

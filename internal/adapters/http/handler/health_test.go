@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"go-dyndns/internal/core/dns"
+	"go-dyndns/internal/core"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"

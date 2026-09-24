@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net"
 
-	"go-dyndns/internal/core/dns"
+	"go-dyndns/internal/core"
 )
 
 type SQLiteDNSRepository struct {

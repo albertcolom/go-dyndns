@@ -28,16 +28,20 @@ dns:
 
 db:
   dsn: "sqlite3://./app.db"  # Storage backend (see Supported Database section)
+
+log:
+  level: "info"   # Log level: debug, info, warn, error
 ```
 Every configuration value in the YAML can be overridden by setting an environment variable.
 
-| YAML Key     | Environment Variable | Description                      |
-|--------------|----------------------|----------------------------------|
-| `http.addr`  | `HTTP_ADDR`          | HTTP server listen address       |
-| `http.token` | `HTTP_TOKEN`         | API authentication token         |
-| `dns.addr`   | `DNS_ADDR`           | DNS server listen address        |
-| `dns.net`    | `DNS_NET`            | DNS protocol (e.g., `udp`, `tcp`)|
-| `db.dsn`     | `DB_DSN`             | DSN connection string            |
+| YAML Key     | Environment Variable | Description                          |
+|--------------|----------------------|---------------------------------------|
+| `http.addr`  | `HTTP_ADDR`          | HTTP server listen address            |
+| `http.token` | `HTTP_TOKEN`         | API authentication token              |
+| `dns.addr`   | `DNS_ADDR`           | DNS server listen address             |
+| `dns.net`    | `DNS_NET`            | DNS protocol (e.g., `udp`, `tcp`)     |
+| `db.dsn`     | `DB_DSN`             | DSN connection string                 |
+| `log.level`  | `LOG_LEVEL`          | Log level: `debug`, `info`, `warn`, `error` |
 
 
 ## 🗄️ Supported Database

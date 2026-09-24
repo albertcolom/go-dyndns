@@ -17,6 +17,7 @@ type Config struct {
 	Http HttpConfig
 	Dns  DnsConfig
 	Db   Db
+	Log  LogConfig
 }
 
 type HttpConfig struct {
@@ -31,6 +32,10 @@ type DnsConfig struct {
 
 type Db struct {
 	Dsn string
+}
+
+type LogConfig struct {
+	Level string
 }
 
 func LoadConfig() (*Config, error) {

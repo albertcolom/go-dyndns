@@ -14,8 +14,13 @@ type SlogLogger struct {
 
 var _ port.Logger = (*SlogLogger)(nil)
 
-func NewSlogLogger() *SlogLogger {
-	handler := slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug})
+func NewSlogLogger(level string) *SlogLogger {
+	var lvl slog.Level
+	if err := lvl.UnmarshalText([]byte(level)); err != nil {
+		lvl = slog.LevelInfo
+	}
+
+	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: lvl})
 	return &SlogLogger{slog: slog.New(handler)}
 }
 

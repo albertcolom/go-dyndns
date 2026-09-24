@@ -8,3 +8,5 @@ db:
   dsn: "file://app.json"
   #dsn: "sqlite3://./app.db"
   #dsn: mysql://root:root@tcp(localhost:3306)/app
+log:
+  level: "info"

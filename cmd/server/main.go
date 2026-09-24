@@ -20,7 +20,7 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	l := logger.NewSlogLogger()
+	l := logger.NewSlogLogger(cfg.Log.Level)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

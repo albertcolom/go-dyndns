@@ -2,7 +2,7 @@
 [![Test Status](https://github.com/albertcolom/go-dyndns/actions/workflows/ci.yml/badge.svg)](https://github.com/albertcolom/go-dyndns/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/albertcolom/go-dyndns)](https://github.com/albertcolom/go-dyndns/blob/main/LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/albertcolom/go-dyndns)](https://github.com/albertcolom/go-dyndns/issues)
-[![Go Version](https://img.shields.io/badge/go-%3E=1.23-blue)](https://golang.org/doc/go1.23)
+[![Go Version](https://img.shields.io/badge/go-%3E=1.26-blue)](https://golang.org/doc/go1.26)
 
 # go-dyndns
 

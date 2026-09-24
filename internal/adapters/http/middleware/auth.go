@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"crypto/subtle"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -18,7 +19,7 @@ func AuthMiddleware(expectedToken string) func(http.Handler) http.Handler {
 				}
 			}
 
-			if token != expectedToken {
+			if subtle.ConstantTimeCompare([]byte(token), []byte(expectedToken)) != 1 {
 				w.Header().Set("Content-Type", "application/json; charset=utf-8")
 				w.WriteHeader(http.StatusUnauthorized)
 				_ = json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized"})

@@ -20,10 +20,7 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	l, err := logger.NewZapLogger()
-	if err != nil {
-		log.Fatalf("Failed to initialize logger: %v", err)
-	}
+	l := logger.NewSlogLogger()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

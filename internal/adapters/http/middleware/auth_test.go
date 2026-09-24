@@ -5,7 +5,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -53,18 +52,12 @@ func TestAuthMiddleware(t *testing.T) {
 	}
 
 	for _, d := range data {
-		gin.SetMode(gin.TestMode)
-
 		t.Run(d.name, func(t *testing.T) {
-			w := httptest.NewRecorder()
-			ctx, router := gin.CreateTestContext(w)
-			router.Use(AuthMiddleware("valid_token"))
+			handler := AuthMiddleware("valid_token")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
 
-			router.GET("/test", func(c *gin.Context) {
-				c.Status(http.StatusOK)
-			})
-
-			req, _ := http.NewRequest("GET", "/test", nil)
+			req := httptest.NewRequest(http.MethodGet, "/test", nil)
 			q := req.URL.Query()
 			if d.token != "" {
 				q.Add("token", d.token)
@@ -75,8 +68,8 @@ func TestAuthMiddleware(t *testing.T) {
 				req.Header.Set("Authorization", d.header)
 			}
 
-			ctx.Request = req
-			router.ServeHTTP(w, req)
+			w := httptest.NewRecorder()
+			handler.ServeHTTP(w, req)
 
 			assert.Equal(t, d.expectedStatus, w.Code)
 			if d.expectError {

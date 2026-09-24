@@ -2,10 +2,12 @@ package http
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"go-dyndns/internal/adapters/http/middleware"
 	"go-dyndns/pkg/logger"
-	"net/http"
 )
 
 type Server struct {
@@ -13,19 +15,22 @@ type Server struct {
 }
 
 func NewHTTPServer(handler *Handler, addr, token string, log logger.Logger) *Server {
-	router := gin.New()
-	router.Use(middleware.LoggerMiddleware(log))
-	router.Use(gin.Recovery())
+	router := chi.NewRouter()
+	// RequestId must run before Logger so the request ID it sets is
+	// visible on the request Logger receives.
 	router.Use(middleware.RequestIdMiddleware())
-	v1 := router.Group("/v1")
-	{
-		v1.GET("/health", handler.Health)
-		protected := v1.Group("").Use(middleware.AuthMiddleware(token))
-		{
-			protected.GET("/update", handler.UpdateIp)
-			protected.GET("/get", handler.GetIp)
-		}
-	}
+	router.Use(middleware.LoggerMiddleware(log))
+	router.Use(chimiddleware.Recoverer)
+
+	router.Route("/v1", func(r chi.Router) {
+		r.Get("/health", handler.Health)
+
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.AuthMiddleware(token))
+			r.Get("/update", handler.UpdateIp)
+			r.Get("/get", handler.GetIp)
+		})
+	})
 
 	httpServer := &http.Server{
 		Addr:    addr,

@@ -1,9 +1,9 @@
 package http
 
 import (
+	"encoding/json"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"go-dyndns/internal/core/dns"
 )
 
@@ -15,47 +15,51 @@ func NewHandler(service dns.Service) *Handler {
 	return &Handler{service: service}
 }
 
-func (h *Handler) Health(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
-func (h *Handler) UpdateIp(c *gin.Context) {
-	domain := c.Query("domain")
-	ip := c.Query("ip")
+func (h *Handler) UpdateIp(w http.ResponseWriter, r *http.Request) {
+	domain := r.URL.Query().Get("domain")
+	ip := r.URL.Query().Get("ip")
 
 	if domain == "" || ip == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing parameters"})
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "Missing parameters"})
 		return
 	}
 
-	err := h.service.Update(c.Request.Context(), domain, ip)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if err := h.service.Update(r.Context(), domain, ip); err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Updated " + domain + " to " + ip})
+	writeJSON(w, http.StatusOK, map[string]string{"message": "Updated " + domain + " to " + ip})
 }
 
-func (h *Handler) GetIp(c *gin.Context) {
-	domain := c.Query("domain")
+func (h *Handler) GetIp(w http.ResponseWriter, r *http.Request) {
+	domain := r.URL.Query().Get("domain")
 
 	if domain == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing parameters"})
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "Missing parameters"})
 		return
 	}
 
-	record, err := h.service.Find(c.Request.Context(), domain)
-
+	record, err := h.service.Find(r.Context(), domain)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
 
 	if record == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Domain not found"})
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "Domain not found"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"domain": record.Domain, "ip": record.IP.String()})
+	writeJSON(w, http.StatusOK, map[string]string{"domain": record.Domain, "ip": record.IP.String()})
+}
+
+func writeJSON(w http.ResponseWriter, status int, payload any) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(payload)
 }

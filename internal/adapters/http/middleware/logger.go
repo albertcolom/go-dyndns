@@ -1,26 +1,56 @@
 package middleware
 
 import (
-	"github.com/gin-gonic/gin"
-	"go-dyndns/pkg/logger"
+	"net"
+	"net/http"
+	"strings"
 	"time"
+
+	"go-dyndns/pkg/logger"
 )
 
-func LoggerMiddleware(log logger.Logger) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		start := time.Now()
+type statusRecorder struct {
+	http.ResponseWriter
+	status int
+}
 
-		c.Next()
+func (r *statusRecorder) WriteHeader(status int) {
+	r.status = status
+	r.ResponseWriter.WriteHeader(status)
+}
 
-		log.Info(
-			"HTTP",
-			"Request",
-			logger.Field{Key: "method", Value: c.Request.Method},
-			logger.Field{Key: "path", Value: c.Request.URL.Path},
-			logger.Field{Key: "status", Value: c.Writer.Status()},
-			logger.Field{Key: "client_ip", Value: c.ClientIP()},
-			logger.Field{Key: "duration", Value: time.Since(start)},
-			logger.Field{Key: "request_id", Value: c.GetString("RequestID")},
-		)
+// LoggerMiddleware must be registered after RequestIdMiddleware so the
+// request ID it reads from context has already been set.
+func LoggerMiddleware(log logger.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+
+			rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
+			next.ServeHTTP(rec, r)
+
+			log.Info(
+				"HTTP",
+				"Request",
+				logger.Field{Key: "method", Value: r.Method},
+				logger.Field{Key: "path", Value: r.URL.Path},
+				logger.Field{Key: "status", Value: rec.status},
+				logger.Field{Key: "client_ip", Value: clientIP(r)},
+				logger.Field{Key: "duration", Value: time.Since(start)},
+				logger.Field{Key: "request_id", Value: RequestIDFromContext(r.Context())},
+			)
+		})
 	}
+}
+
+func clientIP(r *http.Request) string {
+	if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
+		return strings.TrimSpace(strings.Split(fwd, ",")[0])
+	}
+
+	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+		return host
+	}
+
+	return r.RemoteAddr
 }

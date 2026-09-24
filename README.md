@@ -49,12 +49,14 @@ The go-dyndns service supports multiple database backends through a unified DSN 
 
 Below is a summary of supported drivers:
 
-| Driver    | DSN Format Example                                                        | Description                  | Go Driver Package                         |
-|-----------|----------------------------------------------------------------------------|------------------------------|-------------------------------------------|
-| `file`    | `file://./app.json`                                                       | JSON file storage on disk    | _Built-in (no external dependency)_       |
-| `sqlite`  | `sqlite://./app.db`                                                       | Alias of `sqlite3`             |  |
-| `sqlite3` | `sqlite3://./app.db`                                                      | Lightweight SQLite database  | [`github.com/mattn/go-sqlite3`](https://github.com/mattn/go-sqlite3) |
-| `mysql`   | `mysql://root:root@tcp(localhost:3306)/app?tls=false`         | MySQL or MariaDB SQL backend | [`github.com/go-sql-driver/mysql`](https://github.com/go-sql-driver/mysql) |
+| Driver    | DSN Format Example                                                        | Description                  | Go Driver Package                         | Multi-replica safe |
+|-----------|----------------------------------------------------------------------------|------------------------------|--------------------------------------------|:-------------------:|
+| `file`    | `file://./app.json`                                                       | JSON file storage on disk    | _Built-in (no external dependency)_       | ❌ |
+| `sqlite`  | `sqlite://./app.db`                                                       | Alias of `sqlite3`             |  | ❌ |
+| `sqlite3` | `sqlite3://./app.db`                                                      | Lightweight SQLite database  | [`github.com/mattn/go-sqlite3`](https://github.com/mattn/go-sqlite3) | ❌ |
+| `mysql`   | `mysql://root:root@tcp(localhost:3306)/app?tls=false`         | MySQL or MariaDB SQL backend | [`github.com/go-sql-driver/mysql`](https://github.com/go-sql-driver/mysql) | ✅ |
+
+> **Running more than one instance (e.g. multiple Kubernetes pods)?** Use the `mysql` backend. `file` and `sqlite`/`sqlite3` store data on the local disk of a single instance, guarded only by an in-process lock — with several replicas, each one would read/write its own separate copy of the data (or race on a shared volume), so DNS records would silently go out of sync between instances. Scale those backends by keeping a single replica.
 
 ## 🧬 Database Migrations
 This app supports database migrations (e.g., for SQLite/MySQL/MariaDB) using a migration tool in `./cmd/migrations`

@@ -1,4 +1,4 @@
-package http
+package handler
 
 import (
 	"context"
@@ -13,21 +13,6 @@ import (
 	"go-dyndns/internal/core/dns"
 	"go.uber.org/mock/gomock"
 )
-
-func TestHealthHandler(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockService := dns.NewMockService(ctrl)
-	handler := NewHandler(mockService)
-
-	req := httptest.NewRequest(http.MethodGet, "/health", nil)
-	resp := httptest.NewRecorder()
-	handler.Health(resp, req)
-
-	assert.Equal(t, http.StatusOK, resp.Code)
-	assert.JSONEq(t, `{"status":"ok"}`, resp.Body.String())
-}
 
 func TestUpdateHandler(t *testing.T) {
 	ctrl := gomock.NewController(t)

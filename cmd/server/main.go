@@ -5,6 +5,7 @@ import (
 	"go-dyndns/config"
 	server "go-dyndns/internal/adapters/dns"
 	"go-dyndns/internal/adapters/http"
+	"go-dyndns/internal/adapters/http/handler"
 	"go-dyndns/internal/adapters/repository"
 	"go-dyndns/internal/core/dns"
 	"go-dyndns/pkg/db"
@@ -60,7 +61,7 @@ func main() {
 	dnsServer := server.NewDnsServer(dnsHandler, cfg.Dns.Addr, cfg.Dns.Net, l)
 	dnsErrChan := StartDNSServer(dnsServer, l)
 
-	httpHandler := http.NewHandler(service)
+	httpHandler := handler.NewHandler(service)
 	httpServer := http.NewHTTPServer(httpHandler, cfg.Http.Addr, cfg.Http.Token, l)
 	httpErrChan := StartHTTPServer(httpServer, l)
 

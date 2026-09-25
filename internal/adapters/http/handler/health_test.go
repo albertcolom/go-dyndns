@@ -99,10 +99,6 @@ func TestReadyzHandler(t *testing.T) {
 	})
 
 	t.Run("Slow checker times out", func(t *testing.T) {
-		origTimeout := timeout
-		timeout = 20 * time.Millisecond
-		defer func() { timeout = origTimeout }()
-
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
@@ -115,12 +111,17 @@ func TestReadyzHandler(t *testing.T) {
 			"Slow": mockSlowChecker,
 		})
 
-		req := httptest.NewRequest(http.MethodGet, "/readyz", nil)
+		// A short deadline on the incoming request bounds defaultTimeout
+		// down to something the test doesn't have to wait 2s for.
+		reqCtx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+		defer cancel()
+
+		req := httptest.NewRequest(http.MethodGet, "/readyz", nil).WithContext(reqCtx)
 		resp := httptest.NewRecorder()
 		handler.Readyz(resp, req)
 
 		assert.Equal(t, http.StatusServiceUnavailable, resp.Code)
-		assert.JSONEq(t, `{"status":"unavailable","checks":{"Slow":"Error: context deadline exceeded"}}`, resp.Body.String())
+		assert.JSONEq(t, `{"status":"unavailable","checks":{"Slow":"context deadline exceeded"}}`, resp.Body.String())
 	})
 
 	t.Run("Nil checker entry is skipped", func(t *testing.T) {

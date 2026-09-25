@@ -1,6 +1,12 @@
 package handler
 
-import "go-dyndns/internal/ports"
+import (
+	"time"
+
+	"go-dyndns/internal/ports"
+)
+
+const defaultTimeout = 2 * time.Second
 
 type Handler struct {
 	service ports.DNSService

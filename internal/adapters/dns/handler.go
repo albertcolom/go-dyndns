@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"go-dyndns/internal/ports"
 	"strings"
+	"time"
 
 	server "github.com/miekg/dns"
 )
+
+const lookupTimeout = 2 * time.Second
 
 type Handler struct {
 	service ports.DNSService
@@ -19,7 +22,9 @@ func NewDnsHandler(service ports.DNSService, log ports.Logger) *Handler {
 }
 
 func (h *Handler) HandleDNSRequest(w server.ResponseWriter, r *server.Msg) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), lookupTimeout)
+	defer cancel()
+
 	msg := new(server.Msg)
 	msg.SetReply(r)
 

@@ -8,6 +8,8 @@ import (
 	"go-dyndns/internal/ports"
 )
 
+var domainPattern = regexp.MustCompile(ports.DomainPattern)
+
 type dnsService struct {
 	repository ports.DNSRepository
 }
@@ -45,8 +47,7 @@ func validateDomain(domain string) error {
 	if len(domain) > 255 {
 		return ports.ErrInvalidDomainLen
 	}
-	match, _ := regexp.MatchString(ports.DomainPattern, domain)
-	if !match {
+	if !domainPattern.MatchString(domain) {
 		return ports.ErrInvalidDomain
 	}
 	return nil

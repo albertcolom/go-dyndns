@@ -1,6 +1,31 @@
 package handler
 
-import "net/http"
+import (
+	"context"
+	"errors"
+	"net/http"
+
+	"go-dyndns/internal/ports"
+)
+
+// validationErrors are the service-layer errors that stem from bad caller
+// input rather than an internal failure, so they map to 400 not 500.
+var validationErrors = []error{
+	ports.ErrDomainEmpty,
+	ports.ErrInvalidDomain,
+	ports.ErrInvalidDomainLen,
+	ports.ErrEmptyIP,
+	ports.ErrInvalidIP,
+}
+
+func isValidationError(err error) bool {
+	for _, target := range validationErrors {
+		if errors.Is(err, target) {
+			return true
+		}
+	}
+	return false
+}
 
 func (h *Handler) UpdateIp(w http.ResponseWriter, r *http.Request) {
 	domain := r.URL.Query().Get("domain")
@@ -11,7 +36,14 @@ func (h *Handler) UpdateIp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.service.Update(r.Context(), domain, ip); err != nil {
+	ctx, cancel := context.WithTimeout(r.Context(), defaultTimeout)
+	defer cancel()
+
+	if err := h.service.Update(ctx, domain, ip); err != nil {
+		if isValidationError(err) {
+			Error(w, http.StatusBadRequest, err.Error())
+			return
+		}
 		Error(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -27,7 +59,10 @@ func (h *Handler) GetIp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	record, err := h.service.Find(r.Context(), domain)
+	ctx, cancel := context.WithTimeout(r.Context(), defaultTimeout)
+	defer cancel()
+
+	record, err := h.service.Find(ctx, domain)
 	if err != nil {
 		Error(w, http.StatusInternalServerError, err.Error())
 		return

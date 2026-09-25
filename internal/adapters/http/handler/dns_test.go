@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -18,7 +17,6 @@ import (
 
 func TestUpdateHandler(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	ctx := context.Background()
 	defer ctrl.Finish()
 
 	mockService := mocks.NewMockDNSService(ctrl)
@@ -28,7 +26,7 @@ func TestUpdateHandler(t *testing.T) {
 	ip := "192.168.1.1"
 
 	t.Run("Update successful", func(t *testing.T) {
-		mockService.EXPECT().Update(ctx, domain, ip).Return(nil)
+		mockService.EXPECT().Update(gomock.Any(), domain, ip).Return(nil)
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/update?domain=%s&ip=%s", domain, ip), nil)
 		resp := httptest.NewRecorder()
@@ -57,7 +55,7 @@ func TestUpdateHandler(t *testing.T) {
 	})
 
 	t.Run("Failed unexpected error", func(t *testing.T) {
-		mockService.EXPECT().Update(ctx, domain, ip).Return(fmt.Errorf("some error"))
+		mockService.EXPECT().Update(gomock.Any(), domain, ip).Return(fmt.Errorf("some error"))
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/update?domain=%s&ip=%s", domain, ip), nil)
 		resp := httptest.NewRecorder()
@@ -66,11 +64,21 @@ func TestUpdateHandler(t *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, resp.Code)
 		assert.JSONEq(t, `{"error":"some error"}`, resp.Body.String())
 	})
+
+	t.Run("Failed validation error maps to bad request", func(t *testing.T) {
+		mockService.EXPECT().Update(gomock.Any(), domain, ip).Return(ports.ErrInvalidDomain)
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/update?domain=%s&ip=%s", domain, ip), nil)
+		resp := httptest.NewRecorder()
+		handler.UpdateIp(resp, req)
+
+		assert.Equal(t, http.StatusBadRequest, resp.Code)
+		assert.JSONEq(t, fmt.Sprintf(`{"error":%q}`, ports.ErrInvalidDomain.Error()), resp.Body.String())
+	})
 }
 
 func TestGetIpHandler(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	ctx := context.Background()
 	defer ctrl.Finish()
 
 	mockService := mocks.NewMockDNSService(ctrl)
@@ -79,7 +87,7 @@ func TestGetIpHandler(t *testing.T) {
 	record := ports.Dns{Domain: "example.com", IP: net.ParseIP("192.168.1.1")}
 
 	t.Run("Retrieve found DNS by domain", func(t *testing.T) {
-		mockService.EXPECT().Find(ctx, record.Domain).Return(&record, nil)
+		mockService.EXPECT().Find(gomock.Any(), record.Domain).Return(&record, nil)
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/get?domain=%s", record.Domain), nil)
 		resp := httptest.NewRecorder()
@@ -92,7 +100,7 @@ func TestGetIpHandler(t *testing.T) {
 	})
 
 	t.Run("Not found DNS by domain", func(t *testing.T) {
-		mockService.EXPECT().Find(ctx, record.Domain).Return(nil, nil)
+		mockService.EXPECT().Find(gomock.Any(), record.Domain).Return(nil, nil)
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/get?domain=%s", record.Domain), nil)
 		resp := httptest.NewRecorder()
@@ -112,7 +120,7 @@ func TestGetIpHandler(t *testing.T) {
 	})
 
 	t.Run("Failed unexpected error", func(t *testing.T) {
-		mockService.EXPECT().Find(ctx, record.Domain).Return(nil, fmt.Errorf("some error"))
+		mockService.EXPECT().Find(gomock.Any(), record.Domain).Return(nil, fmt.Errorf("some error"))
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/get?domain=%s", record.Domain), nil)
 		resp := httptest.NewRecorder()

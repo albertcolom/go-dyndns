@@ -4,9 +4,20 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"time"
 
 	"go-dyndns/internal/ports"
 )
+
+const defaultTimeout = 2 * time.Second
+
+type Handler struct {
+	service ports.DNSService
+}
+
+func NewHandler(service ports.DNSService) *Handler {
+	return &Handler{service: service}
+}
 
 // validationErrors are the service-layer errors that stem from bad caller
 // input rather than an internal failure, so they map to 400 not 500.

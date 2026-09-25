@@ -73,7 +73,10 @@ func main() {
 	dnsErrChan := StartDNSServer(ctx, dnsServer, l)
 
 	httpHandler := handler.NewHandler(service)
-	healthHandler := handler.NewHealthHandler(healthChecker)
+	healthHandler := handler.NewHealthHandler(map[string]ports.HealthChecker{
+		"Database":   healthChecker,
+		"DNS server": dnsServer,
+	})
 	httpServer := http.NewHTTPServer(httpHandler, healthHandler, cfg.Http.Addr, cfg.Http.Token, l)
 	httpErrChan := StartHTTPServer(ctx, httpServer, l)
 

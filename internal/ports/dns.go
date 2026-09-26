@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"time"
 )
 
 const DomainPattern = `^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$`
@@ -19,8 +20,10 @@ var (
 )
 
 type Dns struct {
-	Domain string `json:"domain"`
-	IP     net.IP `json:"ip"`
+	Domain    string    `json:"domain"`
+	IP        net.IP    `json:"ip"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type DNSRepository interface {

@@ -36,13 +36,27 @@ func TestUpdateHandler(t *testing.T) {
 		assert.JSONEq(t, fmt.Sprintf("{\"message\":\"Updated %s to %s\"}", domain, ip), resp.Body.String())
 	})
 
-	t.Run("Failed missing IP parameter", func(t *testing.T) {
+	t.Run("Auto-detects IP from the connection when ip parameter is omitted", func(t *testing.T) {
+		detectedIP := "203.0.113.42"
+		mockService.EXPECT().Update(gomock.Any(), domain, detectedIP).Return(nil)
+
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/update?domain=%s", domain), nil)
+		req.RemoteAddr = detectedIP + ":54321"
+		resp := httptest.NewRecorder()
+		handler.UpdateIp(resp, req)
+
+		assert.Equal(t, http.StatusOK, resp.Code)
+		assert.JSONEq(t, fmt.Sprintf("{\"message\":\"Updated %s to %s\"}", domain, detectedIP), resp.Body.String())
+	})
+
+	t.Run("Failed to determine IP when RemoteAddr has no port", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/update?domain=%s", domain), nil)
+		req.RemoteAddr = "not-a-valid-remote-addr"
 		resp := httptest.NewRecorder()
 		handler.UpdateIp(resp, req)
 
 		assert.Equal(t, http.StatusBadRequest, resp.Code)
-		assert.JSONEq(t, `{"error":"Missing parameters"}`, resp.Body.String())
+		assert.JSONEq(t, `{"error":"Unable to determine IP"}`, resp.Body.String())
 	})
 
 	t.Run("Failed missing domain parameter", func(t *testing.T) {

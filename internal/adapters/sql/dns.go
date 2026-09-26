@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"time"
 
 	"go-dyndns/internal/ports"
 )
@@ -19,15 +20,28 @@ func NewSQLRepository(db *sql.DB) *SQLRepository {
 }
 
 func (r *SQLRepository) Save(ctx context.Context, dns *ports.Dns) error {
-	query := `REPLACE INTO dns_records (domain, ip) VALUES (?, ?)`
-	_, err := r.db.ExecContext(ctx, query, dns.Domain, dns.IP.String())
+	now := time.Now().UTC()
+
+	var existing string
+	err := r.db.QueryRowContext(ctx, `SELECT created_at FROM dns_records WHERE domain = ?`, dns.Domain).Scan(&existing)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return err
+	}
+
+	createdAt, parseErr := time.Parse(time.RFC3339, existing)
+	if parseErr != nil {
+		createdAt = now
+	}
+
+	query := `REPLACE INTO dns_records (domain, ip, created_at, updated_at) VALUES (?, ?, ?, ?)`
+	_, err = r.db.ExecContext(ctx, query, dns.Domain, dns.IP.String(), createdAt.Format(time.RFC3339), now.Format(time.RFC3339))
 	return err
 }
 
 func (r *SQLRepository) Find(ctx context.Context, domain string) (*ports.Dns, error) {
-	var ip string
-	query := `SELECT ip FROM dns_records WHERE domain = ?`
-	err := r.db.QueryRowContext(ctx, query, domain).Scan(&ip)
+	var ip, createdAt, updatedAt string
+	query := `SELECT ip, created_at, updated_at FROM dns_records WHERE domain = ?`
+	err := r.db.QueryRowContext(ctx, query, domain).Scan(&ip, &createdAt, &updatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -40,5 +54,9 @@ func (r *SQLRepository) Find(ctx context.Context, domain string) (*ports.Dns, er
 		return nil, fmt.Errorf("invalid IP in database")
 	}
 
-	return &ports.Dns{Domain: domain, IP: parsedIP}, nil
+	record := &ports.Dns{Domain: domain, IP: parsedIP}
+	record.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
+	record.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
+
+	return record, nil
 }

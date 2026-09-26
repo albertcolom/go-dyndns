@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -125,6 +126,25 @@ func TestFileDNSRepositorySaveAndFind(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, record)
 		assert.True(t, net.ParseIP("203.0.113.42").Equal(record.IP))
+	})
+
+	t.Run("Save sets CreatedAt on insert and preserves it across updates while refreshing UpdatedAt", func(t *testing.T) {
+		repo, err := NewFileDNSRepository(filepath.Join(t.TempDir(), "dns.ndjson"))
+		assert.NoError(t, err)
+
+		assert.NoError(t, repo.Save(ctx, &ports.Dns{Domain: "home.example.com", IP: net.ParseIP("203.0.113.42")}))
+		first, err := repo.Find(ctx, "home.example.com")
+		assert.NoError(t, err)
+		assert.False(t, first.CreatedAt.IsZero())
+		assert.False(t, first.UpdatedAt.IsZero())
+
+		time.Sleep(time.Millisecond)
+		assert.NoError(t, repo.Save(ctx, &ports.Dns{Domain: "home.example.com", IP: net.ParseIP("198.51.100.7")}))
+		second, err := repo.Find(ctx, "home.example.com")
+		assert.NoError(t, err)
+
+		assert.True(t, first.CreatedAt.Equal(second.CreatedAt))
+		assert.True(t, second.UpdatedAt.After(first.UpdatedAt))
 	})
 
 	t.Run("Persists one NDJSON record per line, sorted by domain", func(t *testing.T) {

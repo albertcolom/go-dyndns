@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"errors"
+	"net"
 	"net/http"
 	"time"
 
@@ -42,9 +43,18 @@ func (h *Handler) UpdateIp(w http.ResponseWriter, r *http.Request) {
 	domain := r.URL.Query().Get("domain")
 	ip := r.URL.Query().Get("ip")
 
-	if domain == "" || ip == "" {
+	if domain == "" {
 		Error(w, http.StatusBadRequest, "Missing parameters")
 		return
+	}
+
+	if ip == "" {
+		remoteIP, err := remoteAddrIP(r)
+		if err != nil {
+			Error(w, http.StatusBadRequest, "Unable to determine IP")
+			return
+		}
+		ip = remoteIP
 	}
 
 	ctx, cancel := context.WithTimeout(r.Context(), defaultTimeout)
@@ -60,6 +70,14 @@ func (h *Handler) UpdateIp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	JSON(w, http.StatusOK, map[string]string{"message": "Updated " + domain + " to " + ip})
+}
+
+func remoteAddrIP(r *http.Request) (string, error) {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return "", err
+	}
+	return host, nil
 }
 
 func (h *Handler) GetIp(w http.ResponseWriter, r *http.Request) {
@@ -84,5 +102,5 @@ func (h *Handler) GetIp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	JSON(w, http.StatusOK, map[string]string{"domain": record.Domain, "ip": record.IP.String()})
+	JSON(w, http.StatusOK, record)
 }

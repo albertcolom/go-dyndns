@@ -1,18 +1,25 @@
 package file
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"go-dyndns/internal/ports"
+	"net"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"sync"
+
+	"go-dyndns/internal/ports"
 )
 
 type FileDNSRepository struct {
 	filePath string
-	mu       sync.Mutex
+	mu       sync.RWMutex
+	records  map[string]*ports.Dns
 }
 
 func NewFileDNSRepository(filePath string) (*FileDNSRepository, error) {
@@ -21,75 +28,105 @@ func NewFileDNSRepository(filePath string) (*FileDNSRepository, error) {
 		return nil, fmt.Errorf("failed to create storage directory: %w", err)
 	}
 
-	return &FileDNSRepository{filePath: filePath}, nil
+	r := &FileDNSRepository{filePath: filePath}
+
+	loaded, err := r.loadRecords()
+	if err != nil {
+		return nil, err
+	}
+
+	r.records = make(map[string]*ports.Dns, len(loaded))
+	for _, record := range loaded {
+		r.records[record.Domain] = record
+	}
+
+	return r, nil
 }
 
 func (r *FileDNSRepository) Save(_ context.Context, dns *ports.Dns) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	data, err := r.loadRecords()
-	if err != nil {
+	record := cloneDns(dns)
+
+	records := make([]*ports.Dns, 0, len(r.records)+1)
+	for domain, existing := range r.records {
+		if domain == dns.Domain {
+			continue
+		}
+		records = append(records, existing)
+	}
+	records = append(records, record)
+
+	sort.Slice(records, func(i, j int) bool { return records[i].Domain < records[j].Domain })
+
+	if err := r.saveRecords(records); err != nil {
 		return err
 	}
 
-	updated := false
-	for i, record := range data {
-		if record.Domain == dns.Domain {
-			data[i].IP = dns.IP
-			updated = true
-			break
-		}
-	}
+	r.records[dns.Domain] = record
 
-	if !updated {
-		data = append(data, dns)
-	}
-
-	return r.saveRecords(data)
+	return nil
 }
 
 func (r *FileDNSRepository) Find(_ context.Context, domain string) (*ports.Dns, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 
-	records, err := r.loadRecords()
-	if err != nil {
-		return nil, err
+	record, ok := r.records[domain]
+	if !ok {
+		return nil, nil
 	}
 
-	for _, record := range records {
-		if record.Domain == domain {
-			return record, nil
-		}
-	}
+	return cloneDns(record), nil
+}
 
-	return nil, nil
+func cloneDns(dns *ports.Dns) *ports.Dns {
+	return &ports.Dns{Domain: dns.Domain, IP: append(net.IP(nil), dns.IP...)}
 }
 
 func (r *FileDNSRepository) loadRecords() ([]*ports.Dns, error) {
-	var records []*ports.Dns
-	if _, err := os.Stat(r.filePath); os.IsNotExist(err) {
-		return records, nil
+	file, err := os.Open(r.filePath)
+	if os.IsNotExist(err) {
+		return nil, nil
 	}
-
-	file, err := os.ReadFile(r.filePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read JSON file: %w", err)
+		return nil, fmt.Errorf("failed to read NDJSON file: %w", err)
 	}
+	defer file.Close()
 
-	if err := json.Unmarshal(file, &records); err != nil {
-		return nil, fmt.Errorf("failed to parse JSON: %w", err)
+	var records []*ports.Dns
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+
+		var record ports.Dns
+		if err := json.Unmarshal([]byte(line), &record); err != nil {
+			return nil, fmt.Errorf("failed to parse NDJSON line: %w", err)
+		}
+		records = append(records, &record)
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("failed to read NDJSON file: %w", err)
 	}
 
 	return records, nil
 }
 
 func (r *FileDNSRepository) saveRecords(records []*ports.Dns) error {
-	content, err := json.MarshalIndent(records, "", "  ")
-	if err != nil {
-		return err
+	var buf bytes.Buffer
+	for _, record := range records {
+		line, err := json.Marshal(record)
+		if err != nil {
+			return err
+		}
+		buf.Write(line)
+		buf.WriteByte('\n')
 	}
+	content := buf.Bytes()
 
 	dir := filepath.Dir(r.filePath)
 	tmp, err := os.CreateTemp(dir, filepath.Base(r.filePath)+".tmp-*")
@@ -111,13 +148,13 @@ func (r *FileDNSRepository) saveRecords(records []*ports.Dns) error {
 	}
 
 	if err := os.Rename(tmpPath, r.filePath); err != nil {
-		return fmt.Errorf("failed to replace JSON file: %w", err)
+		return fmt.Errorf("failed to replace NDJSON file: %w", err)
 	}
 
 	return nil
 }
 
-func (r *FileDNSRepository) Ping(ctx context.Context) error {
+func (r *FileDNSRepository) Ping(_ context.Context) error {
 	dir := filepath.Dir(r.filePath)
 	if _, err := os.Stat(dir); err != nil {
 		return fmt.Errorf("storage directory unreachable: %w", err)

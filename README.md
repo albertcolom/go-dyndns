@@ -51,7 +51,7 @@ Below is a summary of supported drivers:
 
 | Driver    | DSN Format Example                                                        | Description                  | Go Driver Package                         | Multi-replica safe |
 |-----------|----------------------------------------------------------------------------|------------------------------|--------------------------------------------|:-------------------:|
-| `file`    | `file://./app.json`                                                       | JSON file storage on disk    | _Built-in (no external dependency)_       | ❌ |
+| `file`    | `file://./app.ndjson`                                                     | NDJSON file storage on disk (one record per line, in-memory cache) | _Built-in (no external dependency)_       | ❌ |
 | `sqlite`  | `sqlite://./app.db`                                                       | Alias of `sqlite3`             |  | ❌ |
 | `sqlite3` | `sqlite3://./app.db`                                                      | Lightweight SQLite database  | [`github.com/mattn/go-sqlite3`](https://github.com/mattn/go-sqlite3) | ❌ |
 | `mysql`   | `mysql://root:root@tcp(localhost:3306)/app?tls=false`         | MySQL or MariaDB SQL backend | [`github.com/go-sql-driver/mysql`](https://github.com/go-sql-driver/mysql) | ✅ |

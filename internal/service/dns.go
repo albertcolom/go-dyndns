@@ -30,6 +30,13 @@ func (s *dnsService) Find(ctx context.Context, domain string) (*ports.Dns, error
 	return s.repository.Find(ctx, domain)
 }
 
+func (s *dnsService) Delete(ctx context.Context, domain string) error {
+	if err := validateDomain(domain); err != nil {
+		return err
+	}
+	return s.repository.Delete(ctx, domain)
+}
+
 func validateDns(d *ports.Dns) error {
 	if err := validateDomain(d.Domain); err != nil {
 		return err

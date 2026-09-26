@@ -144,3 +144,66 @@ func TestGetIpHandler(t *testing.T) {
 		assert.JSONEq(t, `{"error":"some error"}`, resp.Body.String())
 	})
 }
+
+func TestDeleteIpHandler(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockService := mocks.NewMockDNSService(ctrl)
+	handler := NewHandler(mockService)
+
+	domain := "example.com"
+
+	t.Run("Delete successful", func(t *testing.T) {
+		mockService.EXPECT().Delete(gomock.Any(), domain).Return(nil)
+
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/delete?domain=%s", domain), nil)
+		resp := httptest.NewRecorder()
+		handler.DeleteIp(resp, req)
+
+		assert.Equal(t, http.StatusOK, resp.Code)
+		assert.JSONEq(t, fmt.Sprintf("{\"message\":\"Deleted %s\"}", domain), resp.Body.String())
+	})
+
+	t.Run("Failed missing domain parameter", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodDelete, "/delete", nil)
+		resp := httptest.NewRecorder()
+		handler.DeleteIp(resp, req)
+
+		assert.Equal(t, http.StatusBadRequest, resp.Code)
+		assert.JSONEq(t, `{"error":"Missing parameters"}`, resp.Body.String())
+	})
+
+	t.Run("Not found DNS by domain", func(t *testing.T) {
+		mockService.EXPECT().Delete(gomock.Any(), domain).Return(ports.ErrDomainNotFound)
+
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/delete?domain=%s", domain), nil)
+		resp := httptest.NewRecorder()
+		handler.DeleteIp(resp, req)
+
+		assert.Equal(t, http.StatusNotFound, resp.Code)
+		assert.JSONEq(t, `{"error":"Domain not found"}`, resp.Body.String())
+	})
+
+	t.Run("Failed validation error maps to bad request", func(t *testing.T) {
+		mockService.EXPECT().Delete(gomock.Any(), domain).Return(ports.ErrInvalidDomain)
+
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/delete?domain=%s", domain), nil)
+		resp := httptest.NewRecorder()
+		handler.DeleteIp(resp, req)
+
+		assert.Equal(t, http.StatusBadRequest, resp.Code)
+		assert.JSONEq(t, fmt.Sprintf(`{"error":%q}`, ports.ErrInvalidDomain.Error()), resp.Body.String())
+	})
+
+	t.Run("Failed unexpected error", func(t *testing.T) {
+		mockService.EXPECT().Delete(gomock.Any(), domain).Return(fmt.Errorf("some error"))
+
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/delete?domain=%s", domain), nil)
+		resp := httptest.NewRecorder()
+		handler.DeleteIp(resp, req)
+
+		assert.Equal(t, http.StatusInternalServerError, resp.Code)
+		assert.JSONEq(t, `{"error":"some error"}`, resp.Body.String())
+	})
+}

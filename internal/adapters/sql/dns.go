@@ -38,6 +38,23 @@ func (r *SQLRepository) Save(ctx context.Context, dns *ports.Dns) error {
 	return err
 }
 
+func (r *SQLRepository) Delete(ctx context.Context, domain string) error {
+	result, err := r.db.ExecContext(ctx, `DELETE FROM dns_records WHERE domain = ?`, domain)
+	if err != nil {
+		return err
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return ports.ErrDomainNotFound
+	}
+
+	return nil
+}
+
 func (r *SQLRepository) Find(ctx context.Context, domain string) (*ports.Dns, error) {
 	var ip, createdAt, updatedAt string
 	query := `SELECT ip, created_at, updated_at FROM dns_records WHERE domain = ?`

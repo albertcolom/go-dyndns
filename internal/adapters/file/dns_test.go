@@ -147,6 +147,34 @@ func TestFileDNSRepositorySaveAndFind(t *testing.T) {
 		assert.True(t, second.UpdatedAt.After(first.UpdatedAt))
 	})
 
+	t.Run("Delete returns ErrDomainNotFound for missing domain", func(t *testing.T) {
+		repo, err := NewFileDNSRepository(filepath.Join(t.TempDir(), "dns.json"))
+		assert.NoError(t, err)
+
+		err = repo.Delete(ctx, "missing.example.com")
+
+		assert.ErrorIs(t, err, ports.ErrDomainNotFound)
+	})
+
+	t.Run("Delete removes an existing record from cache and disk", func(t *testing.T) {
+		filePath := filepath.Join(t.TempDir(), "dns.json")
+		repo, err := NewFileDNSRepository(filePath)
+		assert.NoError(t, err)
+
+		assert.NoError(t, repo.Save(ctx, &ports.Dns{Domain: "home.example.com", IP: net.ParseIP("203.0.113.42")}))
+		assert.NoError(t, repo.Delete(ctx, "home.example.com"))
+
+		record, err := repo.Find(ctx, "home.example.com")
+		assert.NoError(t, err)
+		assert.Nil(t, record)
+
+		reopened, err := NewFileDNSRepository(filePath)
+		assert.NoError(t, err)
+		record, err = reopened.Find(ctx, "home.example.com")
+		assert.NoError(t, err)
+		assert.Nil(t, record)
+	})
+
 	t.Run("Persists one NDJSON record per line, sorted by domain", func(t *testing.T) {
 		filePath := filepath.Join(t.TempDir(), "dns.ndjson")
 		repo, err := NewFileDNSRepository(filePath)

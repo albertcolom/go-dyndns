@@ -72,4 +72,23 @@ func TestSQLRepositorySaveAndFind(t *testing.T) {
 		assert.True(t, first.CreatedAt.Equal(second.CreatedAt))
 		assert.True(t, second.UpdatedAt.After(first.UpdatedAt))
 	})
+
+	t.Run("Delete returns ErrDomainNotFound for missing domain", func(t *testing.T) {
+		repo := newTestSQLRepo(t)
+
+		err := repo.Delete(ctx, "missing.example.com")
+
+		assert.ErrorIs(t, err, ports.ErrDomainNotFound)
+	})
+
+	t.Run("Delete removes an existing record", func(t *testing.T) {
+		repo := newTestSQLRepo(t)
+
+		assert.NoError(t, repo.Save(ctx, &ports.Dns{Domain: "home.example.com", IP: net.ParseIP("203.0.113.42")}))
+		assert.NoError(t, repo.Delete(ctx, "home.example.com"))
+
+		record, err := repo.Find(ctx, "home.example.com")
+		assert.NoError(t, err)
+		assert.Nil(t, record)
+	})
 }

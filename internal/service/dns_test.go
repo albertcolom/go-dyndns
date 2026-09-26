@@ -81,6 +81,42 @@ func TestFindDns(t *testing.T) {
 	})
 }
 
+func TestDeleteDns(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepository := mocks.NewMockDNSRepository(ctrl)
+	service := NewDNSService(mockRepository)
+	ctx := context.Background()
+
+	t.Run("Delete successful", func(t *testing.T) {
+		domain := "example.com"
+
+		mockRepository.EXPECT().Delete(ctx, domain).Return(nil)
+		err := service.Delete(ctx, domain)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("Delete propagates not found from repository", func(t *testing.T) {
+		domain := "example.com"
+
+		mockRepository.EXPECT().Delete(ctx, domain).Return(ports.ErrDomainNotFound)
+		err := service.Delete(ctx, domain)
+
+		assert.Equal(t, ports.ErrDomainNotFound, err)
+	})
+
+	t.Run("Delete failed for invalid domain", func(t *testing.T) {
+		domain := "i n v a l i d .domain"
+
+		err := service.Delete(ctx, domain)
+
+		assert.Error(t, err)
+		assert.Equal(t, ports.ErrInvalidDomain, err)
+	})
+}
+
 func TestValidateDomain(t *testing.T) {
 	data := []struct {
 		name     string

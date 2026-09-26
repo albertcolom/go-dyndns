@@ -104,3 +104,30 @@ func (h *Handler) GetIp(w http.ResponseWriter, r *http.Request) {
 
 	JSON(w, http.StatusOK, record)
 }
+
+func (h *Handler) DeleteIp(w http.ResponseWriter, r *http.Request) {
+	domain := r.URL.Query().Get("domain")
+
+	if domain == "" {
+		Error(w, http.StatusBadRequest, "Missing parameters")
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), defaultTimeout)
+	defer cancel()
+
+	if err := h.service.Delete(ctx, domain); err != nil {
+		if errors.Is(err, ports.ErrDomainNotFound) {
+			Error(w, http.StatusNotFound, "Domain not found")
+			return
+		}
+		if isValidationError(err) {
+			Error(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		Error(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	JSON(w, http.StatusOK, map[string]string{"message": "Deleted " + domain})
+}

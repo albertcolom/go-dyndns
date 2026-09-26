@@ -89,6 +89,33 @@ func (r *FileDNSRepository) Find(_ context.Context, domain string) (*ports.Dns, 
 	return cloneDns(record), nil
 }
 
+func (r *FileDNSRepository) Delete(_ context.Context, domain string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if _, ok := r.records[domain]; !ok {
+		return ports.ErrDomainNotFound
+	}
+
+	records := make([]*ports.Dns, 0, len(r.records)-1)
+	for existingDomain, existing := range r.records {
+		if existingDomain == domain {
+			continue
+		}
+		records = append(records, existing)
+	}
+
+	sort.Slice(records, func(i, j int) bool { return records[i].Domain < records[j].Domain })
+
+	if err := r.saveRecords(records); err != nil {
+		return err
+	}
+
+	delete(r.records, domain)
+
+	return nil
+}
+
 func cloneDns(dns *ports.Dns) *ports.Dns {
 	return &ports.Dns{
 		Domain:    dns.Domain,

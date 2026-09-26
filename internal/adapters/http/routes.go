@@ -17,6 +17,7 @@ func RegisterRoutes(router chi.Router, h *handler.Handler, healthHandler *handle
 			r.Use(middleware.AuthMiddleware(token))
 			r.Get("/update", h.UpdateIp)
 			r.Get("/get", h.GetIp)
+			r.Delete("/delete", h.DeleteIp)
 		})
 	})
 }

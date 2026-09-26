@@ -17,6 +17,7 @@ var (
 	ErrInvalidDomainLen = fmt.Errorf("domain too long (max 255 characters)")
 	ErrEmptyIP          = fmt.Errorf("IP cannot be empty")
 	ErrInvalidIP        = fmt.Errorf("invalid IP address")
+	ErrDomainNotFound   = fmt.Errorf("domain not found")
 )
 
 type Dns struct {
@@ -29,9 +30,11 @@ type Dns struct {
 type DNSRepository interface {
 	Save(ctx context.Context, dns *Dns) error
 	Find(ctx context.Context, domain string) (*Dns, error)
+	Delete(ctx context.Context, domain string) error
 }
 
 type DNSService interface {
 	Update(ctx context.Context, domain, ip string) error
 	Find(ctx context.Context, domain string) (*Dns, error)
+	Delete(ctx context.Context, domain string) error
 }

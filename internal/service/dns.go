@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"regexp"
+	"time"
 
 	"go-dyndns/internal/ports"
 )
@@ -32,6 +33,10 @@ func (s *dnsService) Create(ctx context.Context, domain, ip string) error {
 		return ports.ErrDomainExists
 	}
 
+	now := time.Now().UTC()
+	dns.CreatedAt = now
+	dns.UpdatedAt = now
+
 	return s.repository.Save(ctx, dns)
 }
 
@@ -40,6 +45,18 @@ func (s *dnsService) Update(ctx context.Context, domain, ip string) error {
 	if err := validateDns(dns); err != nil {
 		return err
 	}
+
+	existing, err := s.repository.Find(ctx, domain)
+	if err != nil {
+		return err
+	}
+	if existing == nil {
+		return ports.ErrDomainNotFound
+	}
+
+	dns.CreatedAt = existing.CreatedAt
+	dns.UpdatedAt = time.Now().UTC()
+
 	return s.repository.Save(ctx, dns)
 }
 

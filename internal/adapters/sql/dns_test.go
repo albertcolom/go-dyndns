@@ -55,22 +55,38 @@ func TestSQLRepositorySaveAndFind(t *testing.T) {
 		assert.True(t, net.ParseIP("203.0.113.42").Equal(record.IP))
 	})
 
-	t.Run("Save sets CreatedAt on insert and preserves it across updates while refreshing UpdatedAt", func(t *testing.T) {
+	t.Run("Save persists CreatedAt/UpdatedAt exactly as given, without inspecting any prior row", func(t *testing.T) {
 		repo := newTestSQLRepo(t)
 
-		assert.NoError(t, repo.Save(ctx, &ports.Dns{Domain: "home.example.com", IP: net.ParseIP("203.0.113.42")}))
-		first, err := repo.Find(ctx, "home.example.com")
-		assert.NoError(t, err)
-		assert.False(t, first.CreatedAt.IsZero())
-		assert.False(t, first.UpdatedAt.IsZero())
+		createdAt := time.Now().Add(-time.Hour).UTC().Truncate(time.Second)
+		updatedAt := time.Now().UTC().Truncate(time.Second)
 
-		time.Sleep(time.Second)
-		assert.NoError(t, repo.Save(ctx, &ports.Dns{Domain: "home.example.com", IP: net.ParseIP("198.51.100.7")}))
-		second, err := repo.Find(ctx, "home.example.com")
-		assert.NoError(t, err)
+		assert.NoError(t, repo.Save(ctx, &ports.Dns{
+			Domain:    "home.example.com",
+			IP:        net.ParseIP("203.0.113.42"),
+			CreatedAt: createdAt,
+			UpdatedAt: updatedAt,
+		}))
 
-		assert.True(t, first.CreatedAt.Equal(second.CreatedAt))
-		assert.True(t, second.UpdatedAt.After(first.UpdatedAt))
+		record, err := repo.Find(ctx, "home.example.com")
+		assert.NoError(t, err)
+		assert.True(t, createdAt.Equal(record.CreatedAt))
+		assert.True(t, updatedAt.Equal(record.UpdatedAt))
+
+		// A second Save with different timestamps overwrites them verbatim
+		// too — Save never looks at what was stored before.
+		newCreatedAt := time.Now().UTC().Truncate(time.Second)
+		assert.NoError(t, repo.Save(ctx, &ports.Dns{
+			Domain:    "home.example.com",
+			IP:        net.ParseIP("198.51.100.7"),
+			CreatedAt: newCreatedAt,
+			UpdatedAt: newCreatedAt,
+		}))
+
+		record, err = repo.Find(ctx, "home.example.com")
+		assert.NoError(t, err)
+		assert.True(t, newCreatedAt.Equal(record.CreatedAt))
+		assert.True(t, newCreatedAt.Equal(record.UpdatedAt))
 	})
 
 	t.Run("Delete returns ErrDomainNotFound for missing domain", func(t *testing.T) {

@@ -160,6 +160,17 @@ func TestUpdateDomainHandler(t *testing.T) {
 		assert.JSONEq(t, `{"error":"some error"}`, resp.Body.String())
 	})
 
+	t.Run("Domain not found maps to not found", func(t *testing.T) {
+		mockService.EXPECT().Update(gomock.Any(), domain, ip).Return(ports.ErrDomainNotFound)
+
+		req := newRequestWithDomain(http.MethodPut, fmt.Sprintf("/domains/%s?ip=%s", domain, ip), domain)
+		resp := httptest.NewRecorder()
+		handler.UpdateDomain(resp, req)
+
+		assert.Equal(t, http.StatusNotFound, resp.Code)
+		assert.JSONEq(t, `{"error":"Domain not found"}`, resp.Body.String())
+	})
+
 	t.Run("Failed validation error maps to bad request", func(t *testing.T) {
 		mockService.EXPECT().Update(gomock.Any(), domain, ip).Return(ports.ErrInvalidDomain)
 

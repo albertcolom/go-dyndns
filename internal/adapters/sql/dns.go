@@ -20,21 +20,8 @@ func NewSQLRepository(db *sql.DB) *SQLRepository {
 }
 
 func (r *SQLRepository) Save(ctx context.Context, dns *ports.Dns) error {
-	now := time.Now().UTC()
-
-	var existing string
-	err := r.db.QueryRowContext(ctx, `SELECT created_at FROM dns_records WHERE domain = ?`, dns.Domain).Scan(&existing)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return err
-	}
-
-	createdAt, parseErr := time.Parse(time.RFC3339, existing)
-	if parseErr != nil {
-		createdAt = now
-	}
-
 	query := `REPLACE INTO dns_records (domain, ip, created_at, updated_at) VALUES (?, ?, ?, ?)`
-	_, err = r.db.ExecContext(ctx, query, dns.Domain, dns.IP.String(), createdAt.Format(time.RFC3339), now.Format(time.RFC3339))
+	_, err := r.db.ExecContext(ctx, query, dns.Domain, dns.IP.String(), dns.CreatedAt.Format(time.RFC3339), dns.UpdatedAt.Format(time.RFC3339))
 	return err
 }
 

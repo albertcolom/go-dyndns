@@ -12,7 +12,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"time"
 
 	"go-dyndns/internal/ports"
 )
@@ -48,14 +47,7 @@ func (r *FileDNSRepository) Save(_ context.Context, dns *ports.Dns) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	now := time.Now().UTC()
 	record := cloneDns(dns)
-	record.UpdatedAt = now
-	if existing, ok := r.records[dns.Domain]; ok {
-		record.CreatedAt = existing.CreatedAt
-	} else {
-		record.CreatedAt = now
-	}
 
 	records := make([]*ports.Dns, 0, len(r.records)+1)
 	for domain, existing := range r.records {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"testing"
+	"time"
 
 	"go-dyndns/internal/ports"
 	"go-dyndns/internal/ports/mocks"
@@ -20,12 +21,18 @@ func TestCreateDns(t *testing.T) {
 	service := NewDNSService(mockRepository)
 	ctx := context.Background()
 
-	t.Run("Create successful", func(t *testing.T) {
+	t.Run("Create successful sets CreatedAt and UpdatedAt to the same fresh timestamp", func(t *testing.T) {
 		domain := "example.com"
 		ip := net.ParseIP("192.168.1.1")
 
 		mockRepository.EXPECT().Find(ctx, domain).Return(nil, nil)
-		mockRepository.EXPECT().Save(ctx, &ports.Dns{Domain: domain, IP: ip}).Return(nil)
+		mockRepository.EXPECT().Save(ctx, gomock.Any()).DoAndReturn(func(_ context.Context, saved *ports.Dns) error {
+			assert.Equal(t, domain, saved.Domain)
+			assert.True(t, ip.Equal(saved.IP))
+			assert.WithinDuration(t, time.Now(), saved.CreatedAt, time.Second)
+			assert.Equal(t, saved.CreatedAt, saved.UpdatedAt)
+			return nil
+		})
 		err := service.Create(ctx, domain, ip.String())
 
 		assert.NoError(t, err)
@@ -71,14 +78,34 @@ func TestUpdateDns(t *testing.T) {
 	service := NewDNSService(mockRepository)
 	ctx := context.Background()
 
-	t.Run("Update successful", func(t *testing.T) {
+	t.Run("Update successful preserves CreatedAt and refreshes UpdatedAt", func(t *testing.T) {
 		domain := "example.com"
 		ip := net.ParseIP("192.168.1.1")
+		existingCreatedAt := time.Now().Add(-time.Hour).UTC()
+		existing := &ports.Dns{Domain: domain, IP: net.ParseIP("10.0.0.1"), CreatedAt: existingCreatedAt, UpdatedAt: existingCreatedAt}
 
-		mockRepository.EXPECT().Save(ctx, &ports.Dns{Domain: domain, IP: ip}).Return(nil)
+		mockRepository.EXPECT().Find(ctx, domain).Return(existing, nil)
+		mockRepository.EXPECT().Save(ctx, gomock.Any()).DoAndReturn(func(_ context.Context, saved *ports.Dns) error {
+			assert.Equal(t, domain, saved.Domain)
+			assert.True(t, ip.Equal(saved.IP))
+			assert.True(t, existingCreatedAt.Equal(saved.CreatedAt))
+			assert.WithinDuration(t, time.Now(), saved.UpdatedAt, time.Second)
+			assert.True(t, saved.UpdatedAt.After(existingCreatedAt))
+			return nil
+		})
 		err := service.Update(ctx, domain, ip.String())
 
 		assert.NoError(t, err)
+	})
+
+	t.Run("Update fails when domain does not exist", func(t *testing.T) {
+		domain := "example.com"
+		ip := "192.168.1.1"
+
+		mockRepository.EXPECT().Find(ctx, domain).Return(nil, nil)
+		err := service.Update(ctx, domain, ip)
+
+		assert.Equal(t, ports.ErrDomainNotFound, err)
 	})
 
 	t.Run("Update failed for invalid IP", func(t *testing.T) {

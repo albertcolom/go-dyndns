@@ -91,6 +91,10 @@ func (h *Handler) UpdateDomain(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	if err := h.service.Update(ctx, domain, ip); err != nil {
+		if errors.Is(err, ports.ErrDomainNotFound) {
+			Error(w, http.StatusNotFound, "Domain not found")
+			return
+		}
 		if isValidationError(err) {
 			Error(w, http.StatusBadRequest, err.Error())
 			return

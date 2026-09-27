@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi/v5"
+
 	"go-dyndns/internal/ports"
 )
 
@@ -39,14 +41,9 @@ func isValidationError(err error) bool {
 	return false
 }
 
-func (h *Handler) UpdateIp(w http.ResponseWriter, r *http.Request) {
-	domain := r.URL.Query().Get("domain")
+func (h *Handler) UpdateDomain(w http.ResponseWriter, r *http.Request) {
+	domain := chi.URLParam(r, "domain")
 	ip := r.URL.Query().Get("ip")
-
-	if domain == "" {
-		Error(w, http.StatusBadRequest, "Missing parameters")
-		return
-	}
 
 	if ip == "" {
 		remoteIP, err := remoteAddrIP(r)
@@ -80,13 +77,8 @@ func remoteAddrIP(r *http.Request) (string, error) {
 	return host, nil
 }
 
-func (h *Handler) GetIp(w http.ResponseWriter, r *http.Request) {
-	domain := r.URL.Query().Get("domain")
-
-	if domain == "" {
-		Error(w, http.StatusBadRequest, "Missing parameters")
-		return
-	}
+func (h *Handler) GetDomain(w http.ResponseWriter, r *http.Request) {
+	domain := chi.URLParam(r, "domain")
 
 	ctx, cancel := context.WithTimeout(r.Context(), defaultTimeout)
 	defer cancel()
@@ -105,13 +97,8 @@ func (h *Handler) GetIp(w http.ResponseWriter, r *http.Request) {
 	JSON(w, http.StatusOK, record)
 }
 
-func (h *Handler) DeleteIp(w http.ResponseWriter, r *http.Request) {
-	domain := r.URL.Query().Get("domain")
-
-	if domain == "" {
-		Error(w, http.StatusBadRequest, "Missing parameters")
-		return
-	}
+func (h *Handler) DeleteDomain(w http.ResponseWriter, r *http.Request) {
+	domain := chi.URLParam(r, "domain")
 
 	ctx, cancel := context.WithTimeout(r.Context(), defaultTimeout)
 	defer cancel()

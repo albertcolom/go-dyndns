@@ -15,9 +15,13 @@ func RegisterRoutes(router chi.Router, h *handler.Handler, healthHandler *handle
 	router.Route("/v1", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.AuthMiddleware(token))
-			r.Get("/update", h.UpdateIp)
-			r.Get("/get", h.GetIp)
-			r.Delete("/delete", h.DeleteIp)
+			r.Route("/domains", func(r chi.Router) {
+				// GET alias for PUT below: routers/DDNS clients often can only send GET.
+				r.Get("/{domain}/update", h.UpdateDomain)
+				r.Put("/{domain}", h.UpdateDomain)
+				r.Get("/{domain}", h.GetDomain)
+				r.Delete("/{domain}", h.DeleteDomain)
+			})
 		})
 	})
 }

@@ -1,15 +1,16 @@
 package http
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
 	"go-dyndns/internal/adapters/http/handler"
+	"go-dyndns/internal/adapters/logger"
 	"go-dyndns/internal/ports"
 	"go-dyndns/internal/ports/mocks"
 )
@@ -25,18 +26,18 @@ func newTestRouter(t *testing.T) (*mocks.MockDNSService, http.Handler) {
 	mockService := mocks.NewMockDNSService(ctrl)
 	h := handler.NewHandler(mockService)
 	healthHandler := handler.NewHealthHandler(nil)
+	log := logger.NewSlogLogger("error") // keep test output quiet
 
-	router := chi.NewRouter()
-	RegisterRoutes(router, h, healthHandler, testToken)
+	router := NewRouter(h, healthHandler, testToken, log)
 
 	return mockService, router
 }
 
-// TestRegisterRoutes_Domains locks down the /v1/domains resource shape: PUT
+// TestNewRouter_Domains locks down the /v1/domains resource shape: PUT
 // updates a domain, GET .../update does the same over GET (routers/DDNS
 // clients often can't send PUT), plain GET fetches the record, and DELETE
 // removes it.
-func TestRegisterRoutes_Domains(t *testing.T) {
+func TestNewRouter_Domains(t *testing.T) {
 	t.Run("PUT updates the domain", func(t *testing.T) {
 		mockService, router := newTestRouter(t)
 		mockService.EXPECT().Update(gomock.Any(), "example.com", "192.168.1.1").Return(nil)
@@ -89,5 +90,57 @@ func TestRegisterRoutes_Domains(t *testing.T) {
 		router.ServeHTTP(resp, req)
 
 		assert.Equal(t, http.StatusUnauthorized, resp.Code)
+	})
+}
+
+// TestNewRouter_Middleware confirms the top-level middleware stack (request
+// ID, logging, panic recovery) is wired in ahead of the routes it dispatches
+// to.
+func TestNewRouter_Middleware(t *testing.T) {
+	t.Run("Health check bypasses auth", func(t *testing.T) {
+		_, router := newTestRouter(t)
+
+		req := httptest.NewRequest(http.MethodGet, "/livez", nil)
+		resp := httptest.NewRecorder()
+		router.ServeHTTP(resp, req)
+
+		assert.Equal(t, http.StatusOK, resp.Code)
+	})
+
+	t.Run("Request ID middleware tags the response", func(t *testing.T) {
+		_, router := newTestRouter(t)
+
+		req := httptest.NewRequest(http.MethodGet, "/livez", nil)
+		resp := httptest.NewRecorder()
+		router.ServeHTTP(resp, req)
+
+		assert.NotEmpty(t, resp.Header().Get("X-Request-ID"))
+	})
+
+	t.Run("Recoverer turns a handler panic into a 500", func(t *testing.T) {
+		mockService, router := newTestRouter(t)
+		mockService.EXPECT().Find(gomock.Any(), "example.com").DoAndReturn(
+			func(context.Context, string) (*ports.Dns, error) {
+				panic("boom")
+			},
+		)
+
+		req := httptest.NewRequest(http.MethodGet, "/v1/domains/example.com?token="+testToken, nil)
+		resp := httptest.NewRecorder()
+		router.ServeHTTP(resp, req)
+
+		assert.Equal(t, http.StatusInternalServerError, resp.Code)
+	})
+
+	t.Run("Auto-detects the client IP from the connection when ip is omitted", func(t *testing.T) {
+		mockService, router := newTestRouter(t)
+		mockService.EXPECT().Update(gomock.Any(), "example.com", "203.0.113.42").Return(nil)
+
+		req := httptest.NewRequest(http.MethodPut, "/v1/domains/example.com?token="+testToken, nil)
+		req.RemoteAddr = "203.0.113.42:54321"
+		resp := httptest.NewRecorder()
+		router.ServeHTTP(resp, req)
+
+		assert.Equal(t, http.StatusOK, resp.Code)
 	})
 }

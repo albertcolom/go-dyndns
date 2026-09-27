@@ -2,13 +2,20 @@ package http
 
 import (
 	"github.com/go-chi/chi/v5"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
 
 	"go-dyndns/internal/adapters/http/handler"
 	"go-dyndns/internal/adapters/http/middleware"
+	"go-dyndns/internal/ports"
 )
 
-// RegisterRoutes wires the API's endpoints onto router.
-func RegisterRoutes(router chi.Router, h *handler.Handler, healthHandler *handler.HealthHandler, token string) {
+func NewRouter(h *handler.Handler, healthHandler *handler.HealthHandler, token string, log ports.Logger) chi.Router {
+	router := chi.NewRouter()
+	router.Use(chimiddleware.ClientIPFromRemoteAddr)
+	router.Use(middleware.RequestIdMiddleware())
+	router.Use(middleware.LoggerMiddleware(log))
+	router.Use(chimiddleware.Recoverer)
+
 	router.Get("/livez", healthHandler.Livez)
 	router.Get("/readyz", healthHandler.Readyz)
 
@@ -24,4 +31,6 @@ func RegisterRoutes(router chi.Router, h *handler.Handler, healthHandler *handle
 			})
 		})
 	})
+
+	return router
 }

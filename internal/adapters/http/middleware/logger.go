@@ -3,8 +3,9 @@ package middleware
 import (
 	"net"
 	"net/http"
-	"strings"
 	"time"
+
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
 
 	"go-dyndns/internal/ports"
 )
@@ -19,8 +20,6 @@ func (r *statusRecorder) WriteHeader(status int) {
 	r.ResponseWriter.WriteHeader(status)
 }
 
-// LoggerMiddleware must be registered after RequestIdMiddleware so the
-// request ID it reads from context has already been set.
 func LoggerMiddleware(log ports.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -43,8 +42,8 @@ func LoggerMiddleware(log ports.Logger) func(http.Handler) http.Handler {
 }
 
 func clientIP(r *http.Request) string {
-	if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
-		return strings.TrimSpace(strings.Split(fwd, ",")[0])
+	if ip := chimiddleware.GetClientIP(r.Context()); ip != "" {
+		return ip
 	}
 
 	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {

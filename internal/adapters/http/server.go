@@ -5,11 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
-	chimiddleware "github.com/go-chi/chi/v5/middleware"
-
 	"go-dyndns/internal/adapters/http/handler"
-	"go-dyndns/internal/adapters/http/middleware"
 	"go-dyndns/internal/ports"
 )
 
@@ -18,12 +14,7 @@ type Server struct {
 }
 
 func NewHTTPServer(h *handler.Handler, healthHandler *handler.HealthHandler, addr, token string, log ports.Logger) *Server {
-	router := chi.NewRouter()
-	router.Use(middleware.RequestIdMiddleware())
-	router.Use(middleware.LoggerMiddleware(log))
-	router.Use(chimiddleware.Recoverer)
-
-	RegisterRoutes(router, h, healthHandler, token)
+	router := NewRouter(h, healthHandler, token, log)
 
 	httpServer := &http.Server{
 		Addr:    addr,

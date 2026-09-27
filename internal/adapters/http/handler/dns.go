@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
 
 	"go-dyndns/internal/ports"
 )
@@ -69,7 +70,14 @@ func (h *Handler) UpdateDomain(w http.ResponseWriter, r *http.Request) {
 	JSON(w, http.StatusOK, map[string]string{"message": "Updated " + domain + " to " + ip})
 }
 
+// remoteAddrIP prefers the client IP resolved by a chi ClientIPFrom*
+// middleware (routes.go); falling back to a direct RemoteAddr parse keeps
+// this working for callers that invoke the handler outside that chain.
 func remoteAddrIP(r *http.Request) (string, error) {
+	if ip := chimiddleware.GetClientIP(r.Context()); ip != "" {
+		return ip, nil
+	}
+
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return "", err

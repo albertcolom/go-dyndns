@@ -4,9 +4,17 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"time"
 
 	"go-dyndns/internal/adapters/http/handler"
 	"go-dyndns/internal/ports"
+)
+
+const (
+	readHeaderTimeout = 5 * time.Second
+	readTimeout       = 10 * time.Second
+	writeTimeout      = 10 * time.Second
+	idleTimeout       = 60 * time.Second
 )
 
 type Server struct {
@@ -17,8 +25,12 @@ func NewHTTPServer(h *handler.Handler, healthHandler *handler.HealthHandler, add
 	router := NewRouter(h, healthHandler, token, log)
 
 	httpServer := &http.Server{
-		Addr:    addr,
-		Handler: router,
+		Addr:              addr,
+		Handler:           router,
+		ReadHeaderTimeout: readHeaderTimeout,
+		ReadTimeout:       readTimeout,
+		WriteTimeout:      writeTimeout,
+		IdleTimeout:       idleTimeout,
 	}
 
 	return &Server{

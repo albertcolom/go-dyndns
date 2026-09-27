@@ -25,6 +25,15 @@ func (h *Handler) HandleDNSRequest(w server.ResponseWriter, r *server.Msg) {
 	ctx, cancel := context.WithTimeout(context.Background(), lookupTimeout)
 	defer cancel()
 
+	defer func() {
+		if rec := recover(); rec != nil {
+			h.log.Error(ctx, "Recovered from panic handling DNS request",
+				"component", "DNS",
+				"panic", rec,
+			)
+		}
+	}()
+
 	msg := new(server.Msg)
 	msg.SetReply(r)
 

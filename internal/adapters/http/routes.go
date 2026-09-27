@@ -23,6 +23,7 @@ func NewRouter(h *handler.Handler, healthHandler *handler.HealthHandler, token s
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.AuthMiddleware(token))
 			r.Route("/domains", func(r chi.Router) {
+				r.Post("/{domain}", h.CreateDomain)
 				// GET alias for PUT below: routers/DDNS clients often can only send GET.
 				r.Get("/{domain}/update", h.UpdateDomain)
 				r.Put("/{domain}", h.UpdateDomain)

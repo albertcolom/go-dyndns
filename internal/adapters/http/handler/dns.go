@@ -42,6 +42,38 @@ func isValidationError(err error) bool {
 	return false
 }
 
+func (h *Handler) CreateDomain(w http.ResponseWriter, r *http.Request) {
+	domain := chi.URLParam(r, "domain")
+	ip := r.URL.Query().Get("ip")
+
+	if ip == "" {
+		remoteIP, err := remoteAddrIP(r)
+		if err != nil {
+			Error(w, http.StatusBadRequest, "Unable to determine IP")
+			return
+		}
+		ip = remoteIP
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), defaultTimeout)
+	defer cancel()
+
+	if err := h.service.Create(ctx, domain, ip); err != nil {
+		if errors.Is(err, ports.ErrDomainExists) {
+			Error(w, http.StatusConflict, "Domain already exists")
+			return
+		}
+		if isValidationError(err) {
+			Error(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		Error(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	JSON(w, http.StatusCreated, map[string]string{"message": "Created " + domain + " with " + ip})
+}
+
 func (h *Handler) UpdateDomain(w http.ResponseWriter, r *http.Request) {
 	domain := chi.URLParam(r, "domain")
 	ip := r.URL.Query().Get("ip")
@@ -70,9 +102,6 @@ func (h *Handler) UpdateDomain(w http.ResponseWriter, r *http.Request) {
 	JSON(w, http.StatusOK, map[string]string{"message": "Updated " + domain + " to " + ip})
 }
 
-// remoteAddrIP prefers the client IP resolved by a chi ClientIPFrom*
-// middleware (routes.go); falling back to a direct RemoteAddr parse keeps
-// this working for callers that invoke the handler outside that chain.
 func remoteAddrIP(r *http.Request) (string, error) {
 	if ip := chimiddleware.GetClientIP(r.Context()); ip != "" {
 		return ip, nil

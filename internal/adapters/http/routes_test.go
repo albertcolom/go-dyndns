@@ -33,11 +33,33 @@ func newTestRouter(t *testing.T) (*mocks.MockDNSService, http.Handler) {
 	return mockService, router
 }
 
-// TestNewRouter_Domains locks down the /v1/domains resource shape: PUT
-// updates a domain, GET .../update does the same over GET (routers/DDNS
-// clients often can't send PUT), plain GET fetches the record, and DELETE
-// removes it.
+// TestNewRouter_Domains locks down the /v1/domains resource shape: POST
+// creates a domain, PUT updates it, GET .../update does the same as PUT over
+// GET (routers/DDNS clients often can't send PUT), plain GET fetches the
+// record, and DELETE removes it.
 func TestNewRouter_Domains(t *testing.T) {
+	t.Run("POST creates the domain", func(t *testing.T) {
+		mockService, router := newTestRouter(t)
+		mockService.EXPECT().Create(gomock.Any(), "example.com", "192.168.1.1").Return(nil)
+
+		req := httptest.NewRequest(http.MethodPost, "/v1/domains/example.com?ip=192.168.1.1&token="+testToken, nil)
+		resp := httptest.NewRecorder()
+		router.ServeHTTP(resp, req)
+
+		assert.Equal(t, http.StatusCreated, resp.Code)
+	})
+
+	t.Run("POST rejects a domain that already exists", func(t *testing.T) {
+		mockService, router := newTestRouter(t)
+		mockService.EXPECT().Create(gomock.Any(), "example.com", "192.168.1.1").Return(ports.ErrDomainExists)
+
+		req := httptest.NewRequest(http.MethodPost, "/v1/domains/example.com?ip=192.168.1.1&token="+testToken, nil)
+		resp := httptest.NewRecorder()
+		router.ServeHTTP(resp, req)
+
+		assert.Equal(t, http.StatusConflict, resp.Code)
+	})
+
 	t.Run("PUT updates the domain", func(t *testing.T) {
 		mockService, router := newTestRouter(t)
 		mockService.EXPECT().Update(gomock.Any(), "example.com", "192.168.1.1").Return(nil)

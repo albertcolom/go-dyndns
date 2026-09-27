@@ -18,6 +18,23 @@ func NewDNSService(repository ports.DNSRepository) ports.DNSService {
 	return &dnsService{repository: repository}
 }
 
+func (s *dnsService) Create(ctx context.Context, domain, ip string) error {
+	dns := &ports.Dns{Domain: domain, IP: net.ParseIP(ip)}
+	if err := validateDns(dns); err != nil {
+		return err
+	}
+
+	existing, err := s.repository.Find(ctx, domain)
+	if err != nil {
+		return err
+	}
+	if existing != nil {
+		return ports.ErrDomainExists
+	}
+
+	return s.repository.Save(ctx, dns)
+}
+
 func (s *dnsService) Update(ctx context.Context, domain, ip string) error {
 	dns := &ports.Dns{Domain: domain, IP: net.ParseIP(ip)}
 	if err := validateDns(dns); err != nil {

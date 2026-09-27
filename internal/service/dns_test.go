@@ -12,6 +12,57 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+func TestCreateDns(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepository := mocks.NewMockDNSRepository(ctrl)
+	service := NewDNSService(mockRepository)
+	ctx := context.Background()
+
+	t.Run("Create successful", func(t *testing.T) {
+		domain := "example.com"
+		ip := net.ParseIP("192.168.1.1")
+
+		mockRepository.EXPECT().Find(ctx, domain).Return(nil, nil)
+		mockRepository.EXPECT().Save(ctx, &ports.Dns{Domain: domain, IP: ip}).Return(nil)
+		err := service.Create(ctx, domain, ip.String())
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("Create fails when domain already exists", func(t *testing.T) {
+		domain := "example.com"
+		ip := "192.168.1.1"
+		existing := &ports.Dns{Domain: domain, IP: net.ParseIP("10.0.0.1")}
+
+		mockRepository.EXPECT().Find(ctx, domain).Return(existing, nil)
+		err := service.Create(ctx, domain, ip)
+
+		assert.Equal(t, ports.ErrDomainExists, err)
+	})
+
+	t.Run("Create failed for invalid IP", func(t *testing.T) {
+		domain := "example.com"
+		ip := "invalid ip"
+
+		err := service.Create(ctx, domain, ip)
+
+		assert.Error(t, err)
+		assert.Equal(t, ports.ErrInvalidIP, err)
+	})
+
+	t.Run("Create failed for invalid domain", func(t *testing.T) {
+		domain := "i n v a l i d .domain"
+		ip := "192.168.1.1"
+
+		err := service.Create(ctx, domain, ip)
+
+		assert.Error(t, err)
+		assert.Equal(t, ports.ErrInvalidDomain, err)
+	})
+}
+
 func TestUpdateDns(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

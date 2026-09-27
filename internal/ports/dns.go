@@ -18,6 +18,7 @@ var (
 	ErrEmptyIP          = fmt.Errorf("IP cannot be empty")
 	ErrInvalidIP        = fmt.Errorf("invalid IP address")
 	ErrDomainNotFound   = fmt.Errorf("domain not found")
+	ErrDomainExists     = fmt.Errorf("domain already exists")
 )
 
 type Dns struct {
@@ -34,6 +35,7 @@ type DNSRepository interface {
 }
 
 type DNSService interface {
+	Create(ctx context.Context, domain, ip string) error
 	Update(ctx context.Context, domain, ip string) error
 	Find(ctx context.Context, domain string) (*Dns, error)
 	Delete(ctx context.Context, domain string) error

@@ -27,6 +27,84 @@ func newRequestWithDomain(method, target, domain string) *http.Request {
 	return req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 }
 
+func TestCreateDomainHandler(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockService := mocks.NewMockDNSService(ctrl)
+	handler := NewHandler(mockService)
+
+	domain := "example.com"
+	ip := "192.168.1.1"
+
+	t.Run("Create successful", func(t *testing.T) {
+		mockService.EXPECT().Create(gomock.Any(), domain, ip).Return(nil)
+
+		req := newRequestWithDomain(http.MethodPost, fmt.Sprintf("/domains/%s?ip=%s", domain, ip), domain)
+		resp := httptest.NewRecorder()
+		handler.CreateDomain(resp, req)
+
+		assert.Equal(t, http.StatusCreated, resp.Code)
+		assert.JSONEq(t, fmt.Sprintf("{\"message\":\"Created %s with %s\"}", domain, ip), resp.Body.String())
+	})
+
+	t.Run("Auto-detects IP from the connection when ip parameter is omitted", func(t *testing.T) {
+		detectedIP := "203.0.113.42"
+		mockService.EXPECT().Create(gomock.Any(), domain, detectedIP).Return(nil)
+
+		req := newRequestWithDomain(http.MethodPost, fmt.Sprintf("/domains/%s", domain), domain)
+		req.RemoteAddr = detectedIP + ":54321"
+		resp := httptest.NewRecorder()
+		handler.CreateDomain(resp, req)
+
+		assert.Equal(t, http.StatusCreated, resp.Code)
+		assert.JSONEq(t, fmt.Sprintf("{\"message\":\"Created %s with %s\"}", domain, detectedIP), resp.Body.String())
+	})
+
+	t.Run("Failed to determine IP when RemoteAddr has no port", func(t *testing.T) {
+		req := newRequestWithDomain(http.MethodPost, fmt.Sprintf("/domains/%s", domain), domain)
+		req.RemoteAddr = "not-a-valid-remote-addr"
+		resp := httptest.NewRecorder()
+		handler.CreateDomain(resp, req)
+
+		assert.Equal(t, http.StatusBadRequest, resp.Code)
+		assert.JSONEq(t, `{"error":"Unable to determine IP"}`, resp.Body.String())
+	})
+
+	t.Run("Domain already exists maps to conflict", func(t *testing.T) {
+		mockService.EXPECT().Create(gomock.Any(), domain, ip).Return(ports.ErrDomainExists)
+
+		req := newRequestWithDomain(http.MethodPost, fmt.Sprintf("/domains/%s?ip=%s", domain, ip), domain)
+		resp := httptest.NewRecorder()
+		handler.CreateDomain(resp, req)
+
+		assert.Equal(t, http.StatusConflict, resp.Code)
+		assert.JSONEq(t, `{"error":"Domain already exists"}`, resp.Body.String())
+	})
+
+	t.Run("Failed validation error maps to bad request", func(t *testing.T) {
+		mockService.EXPECT().Create(gomock.Any(), domain, ip).Return(ports.ErrInvalidDomain)
+
+		req := newRequestWithDomain(http.MethodPost, fmt.Sprintf("/domains/%s?ip=%s", domain, ip), domain)
+		resp := httptest.NewRecorder()
+		handler.CreateDomain(resp, req)
+
+		assert.Equal(t, http.StatusBadRequest, resp.Code)
+		assert.JSONEq(t, fmt.Sprintf(`{"error":%q}`, ports.ErrInvalidDomain.Error()), resp.Body.String())
+	})
+
+	t.Run("Failed unexpected error", func(t *testing.T) {
+		mockService.EXPECT().Create(gomock.Any(), domain, ip).Return(fmt.Errorf("some error"))
+
+		req := newRequestWithDomain(http.MethodPost, fmt.Sprintf("/domains/%s?ip=%s", domain, ip), domain)
+		resp := httptest.NewRecorder()
+		handler.CreateDomain(resp, req)
+
+		assert.Equal(t, http.StatusInternalServerError, resp.Code)
+		assert.JSONEq(t, `{"error":"some error"}`, resp.Body.String())
+	})
+}
+
 func TestUpdateDomainHandler(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

@@ -172,6 +172,10 @@ func (r *FileDNSRepository) saveRecords(records []*ports.Dns) error {
 		tmp.Close()
 		return fmt.Errorf("failed to write temp file: %w", err)
 	}
+	if err := tmp.Sync(); err != nil {
+		tmp.Close()
+		return fmt.Errorf("failed to sync temp file: %w", err)
+	}
 	if err := tmp.Close(); err != nil {
 		return fmt.Errorf("failed to close temp file: %w", err)
 	}

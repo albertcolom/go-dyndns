@@ -34,9 +34,8 @@ func newTestRouter(t *testing.T) (*mocks.MockDNSService, http.Handler) {
 }
 
 // TestNewRouter_Domains locks down the /v1/domains resource shape: POST
-// creates a domain, PUT updates it, GET .../update does the same as PUT over
-// GET (routers/DDNS clients often can't send PUT), plain GET fetches the
-// record, and DELETE removes it.
+// creates a domain, PUT updates it, plain GET fetches the record, and
+// DELETE removes it.
 func TestNewRouter_Domains(t *testing.T) {
 	t.Run("POST creates the domain", func(t *testing.T) {
 		mockService, router := newTestRouter(t)
@@ -65,17 +64,6 @@ func TestNewRouter_Domains(t *testing.T) {
 		mockService.EXPECT().Update(gomock.Any(), "example.com", "192.168.1.1").Return(nil)
 
 		req := httptest.NewRequest(http.MethodPut, "/v1/domains/example.com?ip=192.168.1.1&token="+testToken, nil)
-		resp := httptest.NewRecorder()
-		router.ServeHTTP(resp, req)
-
-		assert.Equal(t, http.StatusOK, resp.Code)
-	})
-
-	t.Run("GET .../update also updates the domain", func(t *testing.T) {
-		mockService, router := newTestRouter(t)
-		mockService.EXPECT().Update(gomock.Any(), "example.com", "192.168.1.1").Return(nil)
-
-		req := httptest.NewRequest(http.MethodGet, "/v1/domains/example.com/update?ip=192.168.1.1&token="+testToken, nil)
 		resp := httptest.NewRecorder()
 		router.ServeHTTP(resp, req)
 
@@ -112,6 +100,48 @@ func TestNewRouter_Domains(t *testing.T) {
 		router.ServeHTTP(resp, req)
 
 		assert.Equal(t, http.StatusUnauthorized, resp.Code)
+	})
+}
+
+// TestNewRouter_DynDNS2 locks down the /nic/update dyndns2-compat route used
+// by router/firmware DDNS clients (e.g. AVM FritzBox), which authenticate
+// via HTTP Basic Auth rather than a bearer token or query param.
+func TestNewRouter_DynDNS2(t *testing.T) {
+	t.Run("Authenticated request creates the hostname", func(t *testing.T) {
+		mockService, router := newTestRouter(t)
+		mockService.EXPECT().Find(gomock.Any(), "home.example.com").Return(nil, nil)
+		mockService.EXPECT().Create(gomock.Any(), "home.example.com", "192.168.1.1").Return(nil)
+
+		req := httptest.NewRequest(http.MethodGet, "/nic/update?hostname=home.example.com&myip=192.168.1.1", nil)
+		req.SetBasicAuth("any-username", testToken)
+		resp := httptest.NewRecorder()
+		router.ServeHTTP(resp, req)
+
+		assert.Equal(t, http.StatusOK, resp.Code)
+		assert.Equal(t, "good 192.168.1.1\n", resp.Body.String())
+	})
+
+	t.Run("Query token is not accepted, only basic auth", func(t *testing.T) {
+		_, router := newTestRouter(t)
+
+		req := httptest.NewRequest(http.MethodGet, "/nic/update?hostname=home.example.com&myip=192.168.1.1&token="+testToken, nil)
+		resp := httptest.NewRecorder()
+		router.ServeHTTP(resp, req)
+
+		assert.Equal(t, http.StatusUnauthorized, resp.Code)
+		assert.Equal(t, "badauth\n", resp.Body.String())
+	})
+
+	t.Run("Wrong basic auth password is rejected", func(t *testing.T) {
+		_, router := newTestRouter(t)
+
+		req := httptest.NewRequest(http.MethodGet, "/nic/update?hostname=home.example.com&myip=192.168.1.1", nil)
+		req.SetBasicAuth("any-username", "wrong")
+		resp := httptest.NewRecorder()
+		router.ServeHTTP(resp, req)
+
+		assert.Equal(t, http.StatusUnauthorized, resp.Code)
+		assert.Equal(t, "badauth\n", resp.Body.String())
 	})
 }
 

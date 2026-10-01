@@ -16,3 +16,10 @@ func JSON(w http.ResponseWriter, status int, payload any) {
 func Error(w http.ResponseWriter, status int, message string) {
 	JSON(w, status, map[string]string{"error": message})
 }
+
+// Text writes body as a plain-text response with the given status code.
+func Text(w http.ResponseWriter, status int, body string) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(status)
+	_, _ = w.Write([]byte(body + "\n"))
+}

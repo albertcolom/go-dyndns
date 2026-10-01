@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAuthMiddleware(t *testing.T) {
+func TestTokenAuthMiddleware(t *testing.T) {
 	data := []struct {
 		name           string
 		token          string
@@ -53,7 +53,7 @@ func TestAuthMiddleware(t *testing.T) {
 
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
-			handler := AuthMiddleware("valid_token")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handler := TokenAuthMiddleware("valid_token")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			}))
 
@@ -77,4 +77,41 @@ func TestAuthMiddleware(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestBasicAuthMiddleware(t *testing.T) {
+	handler := BasicAuthMiddleware("valid_token")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	t.Run("Valid basic auth password", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/nic/update", nil)
+		req.SetBasicAuth("any-username", "valid_token")
+
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("Invalid basic auth password", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/nic/update", nil)
+		req.SetBasicAuth("any-username", "wrong")
+
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+		assert.Equal(t, "badauth\n", w.Body.String())
+	})
+
+	t.Run("No basic auth provided", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/nic/update", nil)
+
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+		assert.Equal(t, "badauth\n", w.Body.String())
+	})
 }

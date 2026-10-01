@@ -58,6 +58,31 @@ Below is a summary of supported drivers:
 
 > **Running more than one instance (e.g. multiple Kubernetes pods)?** Use the `mysql` backend. `file` and `sqlite`/`sqlite3` store data on the local disk of a single instance, guarded only by an in-process lock — with several replicas, each one would read/write its own separate copy of the data (or race on a shared volume), so DNS records would silently go out of sync between instances. Scale those backends by keeping a single replica.
 
+## 🔄 Router / Firmware DDNS Clients (FritzBox, ddclient, inadyn)
+Besides the JSON `/v1/domains` API, go-dyndns exposes a `/nic/update` endpoint
+implementing the classic **dyndns2** protocol used by built-in DDNS clients in
+routers and firmware — so you can point them at go-dyndns directly, with no
+custom scripting.
+
+- **Method/path:** `GET /nic/update?hostname=<domain>&myip=<ip>`
+- **Auth:** HTTP Basic Auth — any username, with the password set to your `http.token`
+- **Response:** plain text — `good <ip>` (record created/changed), `nochg <ip>` (already up to date), or an error word (`notfqdn`, `badauth`, `911`)
+
+Unlike `/v1/domains`, this endpoint is an upsert: the first update for a
+hostname creates it, later ones update it — there's no separate create step.
+
+### AVM FritzBox setup
+In FRITZ!Box: **Internet → Permit Access → DynDNS**, choose **User-defined**, and set:
+
+| Field | Value |
+|---|---|
+| Update-URL | `http://<your-server>/nic/update?hostname=<domain>&myip=<ipaddr>` |
+| Domain name | your domain, e.g. `home.example.com` |
+| Username | anything (ignored) |
+| Password | your `http.token` |
+
+> IPv6 isn't supported yet (only `<ipaddr>`/IPv4); `<ip6addr>` placeholders are not handled.
+
 ## 🧬 Database Migrations
 This app supports database migrations (e.g., for SQLite/MySQL/MariaDB) using a migration tool in `./cmd/migrations`
 

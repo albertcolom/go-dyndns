@@ -19,13 +19,17 @@ func NewRouter(h *handler.Handler, healthHandler *handler.HealthHandler, token s
 	router.Get("/livez", healthHandler.Livez)
 	router.Get("/readyz", healthHandler.Readyz)
 
+	// dyndns2-compatible endpoint for router/firmware DDNS clients
+	router.Route("/nic", func(r chi.Router) {
+		r.Use(middleware.BasicAuthMiddleware(token))
+		r.Get("/update", h.DynDNS2Update)
+	})
+
 	router.Route("/v1", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
-			r.Use(middleware.AuthMiddleware(token))
+			r.Use(middleware.TokenAuthMiddleware(token))
 			r.Route("/domains", func(r chi.Router) {
 				r.Post("/{domain}", h.CreateDomain)
-				// GET alias for PUT below: routers/DDNS clients often can only send GET.
-				r.Get("/{domain}/update", h.UpdateDomain)
 				r.Put("/{domain}", h.UpdateDomain)
 				r.Get("/{domain}", h.GetDomain)
 				r.Delete("/{domain}", h.DeleteDomain)

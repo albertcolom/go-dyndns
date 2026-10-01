@@ -175,7 +175,7 @@ func (r *FileDNSRepository) saveRecords(records []*ports.Dns) error {
 	if err := tmp.Close(); err != nil {
 		return fmt.Errorf("failed to close temp file: %w", err)
 	}
-	if err := os.Chmod(tmpPath, 0644); err != nil {
+	if err := os.Chmod(tmpPath, 0600); err != nil {
 		return fmt.Errorf("failed to set permissions on temp file: %w", err)
 	}
 
